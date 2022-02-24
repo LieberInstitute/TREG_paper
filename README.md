@@ -2,7 +2,7 @@
 
 ## Overview
 
-TODO
+Use `TREG` to analyze snRNA-seq data. Validate results in RNAscope, via HALO.
 
 ## Cite this work
 
