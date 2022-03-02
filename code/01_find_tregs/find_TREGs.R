@@ -8,13 +8,27 @@ library(sessioninfo)
 load(here("raw-data","sce_pan.v2.Rdata"), verbose = TRUE)
 
 #### Refine Region Lables ####
-table(sce_pan$region, sce_pan$cellType.Broad)
-# orignal_regions <- sce_pan$region ## prehaps look at rare cell types in dlpfc?
-
 ## Capitalize Regions
 sce_pan$region2 <- toupper(sce_pan$region)
 sce_pan$region2[sce_pan$region2 == "SACC"] <- "sACC"
 sce_pan$region2[sce_pan$region2 == "NAC"] <- "NAc"
+
+## Examine the count for each cell type
+(nuclei_counts <- table(sce_pan$cellType.Broad, sce_pan$region2))
+#         AMY DLPFC   HPC   NAc  sACC
+# Astro  1638   782  1170  1099   907
+# Endo     31     0     0     0     0
+# Macro     0    10     0    22     0
+# Micro  1168   388  1126   492   784
+# Mural    39    18    43     0     0
+# Oligo  6080  5455  5912  6134  4584
+# OPC    1459   572   838   669   911
+# Tcell    31     9    26     0     0
+# Excit   443  2388   623     0  4163
+# Inhib  3117  1580   366 11476  3974
+
+write.csv(nuclei_counts, file = here("processed-data", "01_find_tregs", "supp_tables","nuclei_counts.csv"))
+
 ## Rare cell types 
 sce_pan$region2[sce_pan$cellType.Broad %in% c("Macro", "Mural", "Endo", "Tcell")] <- "combined"
 table(sce_pan$region2)
@@ -26,7 +40,7 @@ sce_pan$ctXregion <-paste0(sce_pan$cellType.Broad, "_" ,sce_pan$region2)
 
 #### filter for top 50% expressed of genes ####
 ## record data for each gene
-gene_data <- rowData(sce_pan) %>%
+gene_metrics <- rowData(sce_pan) %>%
   as.data.frame() %>%
   select(Symbol = gene_name, ensembl_id = gene_id)
 
@@ -39,12 +53,18 @@ sce_pan <- sce_pan[row_means > median_row_means,]
 dim(sce_pan)
 # [1] 11519 70527
 
-gene_data$top50 <- gene_data$ensembl_id %in% rownames(sce_pan)
+gene_metrics$top50 <- gene_metrics$ensembl_id %in% rownames(sce_pan)
 
-#### Proption Zero Filtering ####
+#### Proportion Zero Filtering ####
 gene_propZero <- get_prop_zero(sce_pan, "ctXregion")
 head(gene_propZero)
 
+## record max prop zero for gene metrics
+max_propZero <- apply(gene_propZero, 1, max) 
+gene_metrics$max_PropZero <- NA
+gene_metrics[names(max_propZero),]$max_PropZero <- max_propZero
+
+## filter by Proportion Zero
 propZero_limit <- 0.75
 genes_filtered <- filter_prop_zero(gene_propZero, cutoff = propZero_limit)
 
@@ -57,7 +77,7 @@ sce_pan <- sce_pan[genes_filtered,]
 dim(sce_pan)
 # [1]   877 70527
 
-gene_data$PropZero_filter <- gene_data$ensembl_id %in% rownames(sce_pan)
+gene_metrics$PropZero_filter <- gene_metrics$ensembl_id %in% rownames(sce_pan)
 
 #### Run Rank Invariance for full data set ####
 assays(sce_pan)$logcounts <- as.matrix(assays(sce_pan)$logcounts)
@@ -67,16 +87,34 @@ rank_invariance <- rank_invariance_express(sce_pan, group_col = "cellType.Broad"
 rank_invar_df <- as.data.frame(rank_invariance)
 colnames(rank_invar_df ) <- "rank_invar"
 
-gene_data <- gene_data %>% 
+## add to gene metrics
+gene_metrics <- gene_metrics %>% 
   left_join(rank_invar_df %>% 
               rownames_to_column("ensembl_id"))
 
-head(gene_data)
-## Write gene_data to csv for Supplement
-write.csv(gene_data, file = here("processed-data", "01_find_tregs","gene_data.csv"))
+head(gene_metrics)
+
+gene_metrics %>%
+  arrange(-rank_invar) %>%
+  head(10)
+
+#        Symbol      ensembl_id top50 max_PropZero PropZero_filter rank_invar
+# 1      MALAT1 ENSG00000251562  TRUE  0.004065041            TRUE        877
+# 2      JMJD1C ENSG00000171988  TRUE  0.212121212            TRUE        876
+# 3         FTX ENSG00000230590  TRUE  0.212121212            TRUE        875
+# 4       MACF1 ENSG00000127603  TRUE  0.156250000            TRUE        874
+# 5        AKT3 ENSG00000117020  TRUE  0.531250000            TRUE        873
+# 6      TNRC6B ENSG00000100354  TRUE  0.218750000            TRUE        872
+# 7  AC016831.7 ENSG00000285106  TRUE  0.225806452            TRUE        871
+# 8      ZFAND3 ENSG00000156639  TRUE  0.198734729            TRUE        870
+# 9      ARID1B ENSG00000049618  TRUE  0.322580645            TRUE        869
+# 10      CADM2 ENSG00000175161  TRUE  0.734458259            TRUE        868
+
+## Write gene_metrics to csv for Supplement
+write.csv(gene_metrics, file = here("processed-data", "01_find_tregs", "supp_tables", "gene_metrics.csv"))
 
 ## Extract RI data for analysis
-rank_invar_df <- gene_data %>%
+rank_invar_df <- gene_metrics %>%
   filter(!is.na(rank_invar)) %>%
   select(Symbol, ensembl_id, rank_invar) %>%
   arrange(-rank_invar)
@@ -94,7 +132,7 @@ head(rank_invar_df, 10)
 # 9      ARID1B ENSG00000049618        869
 # 10      CADM2 ENSG00000175161        868
 
-save(gene_propZero, rank_invar_df, file = here("processed-data", "01_find_tregs","rank_invar.Rdata"))
+save(gene_propZero, rank_invar_df, file = here("processed-data", "01_find_tregs","supp_tables","rank_invar.Rdata"))
 
 # sgejobs::job_single('find_TREGs', create_shell = TRUE, queue= 'bluejay', memory = '25G', command = "Rscript find_TREGs.R")
 
