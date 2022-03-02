@@ -6,14 +6,16 @@ library(VennDiagram)
 library(ggrepel)
 library(here)
 
+
+
 #### Fig 1. Demo Rank Distribution ####
 set.seed(10)
 demo_rank_data <- tibble(sample = 1:100,
                          `high\ninvariance` = round(rnorm(100, 75, 3), digits = 0),
                          `low\ninvariance` = sample(1:100, 100, replace = TRUE))  %>%
-  pivot_longer(!sample, names_to = "Gene", values_to = "rank")
+  pivot_longer(!sample, names_to = "Gene", values_to = "Expression Rank")
 
-rank_demo_violin <- ggplot(demo_rank_data, aes(x = Gene, y = rank)) +
+rank_demo_violin <- ggplot(demo_rank_data, aes(x = Gene, y = `Expression Rank`)) +
   geom_violin(fill = "light grey") +
   theme_bw() +
   theme(text = element_text(size=15))
@@ -24,7 +26,7 @@ ggsave(rank_demo_violin, filename = here("plots", "01_find_tregs", "main_pdf","f
 #### Prep sce data ####
 load(here("raw-data", "sce_pan.v2.Rdata"), verbose = TRUE)
 load(here("processed-data", "01_find_tregs", "rank_invar.Rdata"), verbose = TRUE)
-load(here("raw-data", "cell_colors.Rdata"), verbose = TRUE)
+load(here("processed-data", "00_data_prep", "cell_colors.Rdata"), verbose = TRUE)
 
 table(sce_pan$cellType.Broad)
 
@@ -64,13 +66,6 @@ genes_of_interest <- tibble(Symbol = c(rank_canidate_list, dotdotdot_genes),
 #### Proportion zero plots ####
 propZero_limit <- 0.75
 ## overall density
-propZero_rowMean_density <- as.data.frame(rowMeans(gene_propZero)) %>%
-  ggplot(aes(x = `rowMeans(gene_propZero)`)) +
-  geom_histogram(binwidth = 0.05)+
-  labs( title = "Proportion Zero Distribution Overall")+
-  geom_vline(xintercept = propZero_limit, color = "red", linetype = "dashed")
-
-# ggsave(propZero_rowMean_density, filename = here("plots", "01_find_tregs", "propZero_rowMean_density.png"))
 
 gene_propZero_long <- gene_propZero %>%
   rownames_to_column("gene") %>%
