@@ -1,31 +1,17 @@
 library(tidyverse)
 library(here)
 
-source("filter_halo.R")
+source("halo_tools.R")
 #### load & prep halo data ###
-rounds <-paste0("round",1:3)
-names(rounds) <- rounds
+files <- list.files(path = here("raw-data", "HALO", "v3"), pattern =".csv", full.names = TRUE)
+names(files) <- c("AKT3", "ARID1B", 'PM')
 
-halo_files <- map(rounds, function(r){
-  files <- list.files(path = here("data", "HK_gene", "halo", r), pattern =".csv", full.names = TRUE)
-  names(files) <- c("ARID1B", "AKT3", "PM")
-  return(files)
-})
-  
-halo_test <- read.csv(halo_files$round2[["ARID1B"]]) ## bad file?
+halo_out <- map(files, read.csv)
+map_int(halo_out, nrow)
+#   AKT3 ARID1B     PM 
+# 301310 285330 292580 
 
-halo_files$round2[["ARID1B"]] <- NA
-
-halo_out <- map_depth(halo_files[c("round1","round3")], 2, read.csv)
-halo_colnames <- map_depth(halo_out, 2, colnames)
-halo_colnames_unlist <- unlist(halo_colnames)
-halo_colnames_edit <- gsub("SLC17A7", "SCL17A7", gsub("POLR2A|MALAT1|ARID1B|AKT3","TREG", gsub("Opal.\\d+","",halo_colnames_unlist)))
-
-hct <- table(unlist(halo_colnames_edit))
-length(hct) #75
-hct[order(names(hct))]
-hct[order(hct)]
-
+map(halo_out, colnames)
 
 halo_out2 <- map2(halo_out[c("ARID1B", "AKT3")], c("ARID1B", "AKT3"), function(data, gene){
   
@@ -57,7 +43,7 @@ halo_out2 <- map2(halo_out[c("ARID1B", "AKT3")], c("ARID1B", "AKT3"), function(d
 })
 
 halo_main <- do.call("rbind",halo_out2)
-halo_main %>% dplyr::count(cell_type)
+halo_main %>% count(cell_type)
 
 halo_PM_copies <- halo_out$PM %>%
   select(Sample = Analysis.Region, 
@@ -90,8 +76,8 @@ halo_PM <- halo_out$PM %>%
 halo_PM %>% dplyr::count(RI_gene, cell_type)
 
 
-halo_all <- rbind(halo_main %>% mutate(analysis = "RNAscope_main"), 
-                  halo_PM %>% mutate(GAD1 = NA, analysis = "RNAscope_supp")) %>% 
+halo_all <- rbind(halo_main %>% mutate(analysis = "RNAscope_1"), 
+                  halo_PM %>% mutate(GAD1 = NA, analysis = "RNAscope_2")) %>% 
   separate(Sample, into = c("GeneTarget", "Rep"), sep = "_", remove = FALSE) %>% 
   mutate(Sample2 = paste0(RI_gene, "_", Rep))
 
@@ -103,8 +89,7 @@ halo_all %>% dplyr::count(Sample2)
 halo_all %>% dplyr::count(cell_type)
 
 #### Print Sample as grid to help filter ####
-# load(here("data", "HK_gene", "halo", "halo_all.rda"), verbose = TRUE)
-# halo_all <-  halo_all %>% select(-region_filter, -qc_filter)
+plot_dir <- "plots/02_analyze_halo"
 
 ## print each with grid
 walk(levels(halo_all$Sample), function(s){
@@ -127,12 +112,12 @@ walk(levels(halo_all$Sample), function(s){
   
   s<- gsub("/","",s)
   
-  ggsave(grid_hex, filename = here("plots", "HK_gene","halo", paste0("grid_hex_",s,".png")))
+  ggsave(grid_hex, filename = here(plot_dir, "explore", "QC", paste0("grid_hex_",s,".png")))
 })
 
 
 #### Add filter annotations ####
-bad_regions <- read_csv(here("data","HK_gene","halo","bad_regions.csv"))%>%
+bad_regions <- read_csv(here("processed-data","02_analyze_halo","bad_regions.csv")) %>%
   mutate(GeneTarget = gsub("_Rep#[123]","",Sample))
 
 halo_all <-  halo_all %>% select(-region_filter)
@@ -146,8 +131,8 @@ halo_all <- map_dfr(levels(halo_all$Sample), function(s){
 
 halo_all %>% count(region_filter)
 # region_filter       n
-# 1 FALSE         1182371
-# 2 TRUE            78040
+# 1 FALSE         1099931
+# 2 TRUE            71869
 
 halo_all <- halo_all %>%
   mutate(problem2 = gsub("[0-9]","",problem)) 
@@ -155,7 +140,7 @@ halo_all <- halo_all %>%
 halo_all %>% count(problem2)
 
 #### Plot Regional Filtering ####
-anno_test <- ggplot() +
+qc_plot <- ggplot() +
   stat_summary_hex(data = halo_all,
                    aes(x = XMax, y = YMax, z = nucleus_area),
                    fun = mean, bins = 100) +
@@ -167,16 +152,27 @@ anno_test <- ggplot() +
             fill = NA, color = "red") +
   theme(panel.grid.major.x = element_line(color="grey60"),
         panel.grid.major.y = element_line(color="grey60")) +
-  scale_fill_continuous(type = "viridis") +
-  facet_wrap(~GeneTarget) +
+  scale_fill_continuous(type = "viridis", name = "Mean\nNuclear\nArea") +
+  facet_wrap(~GeneTarget) 
+
+qc_plot_grid <-  qc_plot +
   scale_x_continuous(minor_breaks = seq(0, 40000, 1000)) +       
   scale_y_continuous(minor_breaks = seq(90000, 0, -1000), trans = "reverse") +
   coord_equal()
 
-ggsave(anno_test, filename = here("plots", "HK_gene","halo", "anno_test.png"), width = 10)
+ggsave(qc_plot_grid, filename = here(plot_dir, "explore", "mean_area_qc_grid.png"), width = 10)
+
+qc_plot_supp <-  qc_plot +
+  scale_y_continuous(trans = "reverse") +
+  theme_bw() +
+  theme(text = element_text(size=15))
+
+ggsave(qc_plot_supp, filename = here(plot_dir, "supp_pdf", "mean_area_qc_grid.png"), width = 10)
+ggsave(qc_plot_supp, filename = here(plot_dir, "supp_pdf", "mean_area_qc_grid.pdf"), width = 10)
 
 
-anno_filter_test <- ggplot() +
+
+qc_plot_filtered <- ggplot() +
   stat_summary_hex(data = halo_all %>% filter(!region_filter),
                    aes(x = XMax, y = YMax, z = nucleus_area),
                    fun = mean, bins = 100) +
@@ -189,13 +185,13 @@ anno_filter_test <- ggplot() +
   scale_fill_continuous(type = "viridis") +
   theme(panel.grid.major.x = element_line(color="grey60"),
         panel.grid.major.y = element_line(color="grey60")) +
-  scale_fill_continuous(type = "viridis") +
+  scale_fill_continuous(type = "viridis", name = "Mean\nNuclear\nArea") +
   facet_wrap(~GeneTarget) +
   scale_x_continuous(minor_breaks = seq(0, 40000, 1000)) +       
   scale_y_continuous(minor_breaks = seq(90000, 0, -1000), trans = "reverse") +
   coord_equal()
 
-ggsave(anno_filter_test, filename = here("plots", "HK_gene","halo", "anno_filter_test.png"), width = 10)
+ggsave(qc_plot_filtered, filename = here(plot_dir, "explore", "mean_area_qc_grid_filter.png"), width = 10)
 
 #### QC box plots ####
 ## nucleus area
@@ -208,7 +204,7 @@ qc_boxplot_size <- halo_all  %>%
   ggplot(aes(region_filter, nucleus_area, color = problem2)) +
   geom_boxplot()
 
-ggsave(qc_boxplot_size, filename = here("plots", "HK_gene","halo", "qc_boxplot_size.png"))
+ggsave(qc_boxplot_size, filename = here(plot_dir, "explore", "qc_boxplot_size.png"))
 
 ## n puncta
 halo_all %>% group_by(region_filter) %>%
@@ -219,7 +215,7 @@ qc_boxplot_size <- halo_all  %>%
   ggplot(aes(region_filter, n_puncta, color = problem2)) +
   geom_boxplot()
 
-ggsave(qc_boxplot_size, filename = here("plots", "HK_gene","halo", "qc_boxplot_puncta.png"))
+ggsave(qc_boxplot_size, filename = here(plot_dir, "explore", "qc_boxplot_puncta.png"))
 
 ## filter summary
 halo_all %>%
@@ -239,7 +235,7 @@ halo_all  %>%
 
 
 #### Save Data ####
-save(halo_all, file = here("data", "HK_gene", "halo", "halo_all.rda"))
+save(halo_all, file = here("processed-data","02_analyze_halo", "halo_all.rda"))
 
 # sgejobs::job_single('build_halo_all', create_shell = TRUE, queue= 'bluejay', memory = '25G', command = "Rscript build_halo_all.R")
 ## Reproducibility information
