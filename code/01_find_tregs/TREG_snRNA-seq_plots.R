@@ -6,6 +6,9 @@ library(VennDiagram)
 library(ggrepel)
 library(here)
 
+
+plot_dir <- "plots/01_find_tregs"
+
 #### Fig 1. Demo Rank Distribution ####
 set.seed(10)
 demo_rank_data <- tibble(sample = 1:100,
@@ -18,8 +21,8 @@ rank_demo_violin <- ggplot(demo_rank_data, aes(x = Gene, y = `Expression Rank`))
   theme_bw() +
   theme(text = element_text(size=15))
 
-# ggsave(rank_demo_violin, filename = here("plots", "01_find_tregs", "main_pdf","fig1_rank_violin_demo.png"), width = 3, height = 6)
-ggsave(rank_demo_violin, filename = here("plots", "01_find_tregs", "main_pdf","fig1_rank_violin_demo.pdf"), width = 3, height = 3)
+# ggsave(rank_demo_violin, filename = here(plot_dir, "main_pdf","fig1_rank_violin_demo.png"), width = 3, height = 6)
+ggsave(rank_demo_violin, filename = here(plot_dir, "main_pdf","fig1_rank_violin_demo.pdf"), width = 3, height = 3)
 
 #### Prep sce data ####
 load(here("raw-data", "sce_pan.v2.Rdata"), verbose = TRUE)
@@ -106,8 +109,8 @@ propZero_density <- gene_propZero_long %>%
   scale_y_continuous(breaks=seq(0, 3000, 1500))+ 
   scale_x_continuous(breaks=seq(0, 1, .5))
 
-# ggsave(propZero_density, filename = here("plots", "01_find_tregs", "main_pdf","fig2_propZero_density.png"), width = 6, height = 7)
-ggsave(propZero_density, filename = here("plots", "01_find_tregs", "main_pdf","fig2_propZero_density.pdf"), width = 6, height = 7)
+# ggsave(propZero_density, filename = here(plot_dir, "main_pdf","fig2_propZero_density.png"), width = 6, height = 7)
+ggsave(propZero_density, filename = here(plot_dir, "main_pdf","fig2_propZero_density.pdf"), width = 6, height = 7)
 
 
 propZero_density_rare <- gene_propZero_long %>%
@@ -121,7 +124,7 @@ propZero_density_rare <- gene_propZero_long %>%
   theme_bw()+
   theme(legend.position = "none", text = element_text(size=15), axis.text.x = element_text(angle = 90, hjust = 1))
 
-ggsave(propZero_density_rare, filename = here("plots", "01_find_tregs", "supp_pdf","fig_supp_propZero_density_rare_ct.png"), width = 7, height = 2)
+ggsave(propZero_density_rare, filename = here(plot_dir, "supp_pdf","fig_supp_propZero_density_rare_ct.png"), width = 7, height = 2)
 
 ## filter 
 # sce_pan <- sce_pan[genes_filtered,]
@@ -142,7 +145,7 @@ ggsave(propZero_density_rare, filename = here("plots", "01_find_tregs", "supp_pd
 #   labs( title = paste0("Proportion Zero Distribution - filter for ", propZero_limit, " max non-zero"),
 #         x = "Proportion Zero per Group", y = "Number of Genes")
 # 
-# ggsave(propZero_density_filtered, filename = here("plots", "01_find_tregs", "propZero_density_filter.png"), width = 10)
+# ggsave(propZero_density_filtered, filename = here(plot_dir, "propZero_density_filter.png"), width = 10)
 
 #### Demo filtering ####
 filter_demo <- gene_symbol %>% 
@@ -162,8 +165,8 @@ filter_demo_scatter <- ggplot(filter_demo, aes(x = Symbol, y = propZero)) +
   theme(text = element_text(size=15), 
         axis.text.x = element_text(angle = 90, hjust = 1, face="italic"))
 
-# ggsave(filter_demo_scatter, filename = here("plots", "01_find_tregs", "main_pdf","fig2b_propZero_filter_demo.png"), width = 4, height = 7)
-ggsave(filter_demo_scatter, filename = here("plots", "01_find_tregs", "main_pdf","fig2b_propZero_filter_demo.pdf"), width = 4, height = 7)
+# ggsave(filter_demo_scatter, filename = here(plot_dir, "main_pdf","fig2b_propZero_filter_demo.png"), width = 4, height = 7)
+ggsave(filter_demo_scatter, filename = here(plot_dir, "main_pdf","fig2b_propZero_filter_demo.pdf"), width = 4, height = 7)
 
 #### Fig 3. Real Rank Distribution ####
 load(here("processed-data", "01_find_tregs", "rank_df_subset.Rdata"), verbose = TRUE) 
@@ -181,51 +184,52 @@ rank_long <- rank_df_subset %>%
 rank_violin <- ggplot(rank_long, aes(x = Symbol, y = rank)) +
   geom_violin(fill = "light grey", scale = "width") +
   labs(x = "Gene") +
+  labs(y = "Expression Rank") +
   theme_bw() +
   theme(text = element_text(size=15), 
         axis.text.x = element_text(angle = 90, hjust = 1, face="italic")) 
 
-# ggsave(rank_violin, filename = here("plots", "01_find_tregs", "main_pdf","fig3_rank_violin.png"), width = 3, height = 6)
-ggsave(rank_violin, filename = here("plots", "01_find_tregs", "main_pdf","fig3_rank_violin.pdf"), width = 3, height = 6)
+# ggsave(rank_violin, filename = here(plot_dir, "main_pdf","fig3_rank_violin.png"), width = 3, height = 6)
+ggsave(rank_violin, filename = here(plot_dir, "main_pdf","fig3_rank_violin.pdf"), width = 3, height = 6)
 
 rank_violin_ct <- ggplot(rank_long, aes(x = cellType.Broad, y = rank, fill = cellType.Broad)) +
   geom_violin(scale = "width") +
   labs(x = "Cell Type") +
   facet_wrap(~Symbol, ncol = 2) +
   scale_fill_manual(values = cell_colors) +
+  labs(y = "Expression Rank") +
   theme_bw() +
   theme(text = element_text(size=15), 
         legend.position = "none",
         axis.text.x = element_text(angle = 90, hjust = 1),
         strip.text.x = element_text(face="italic")) 
 
-# ggsave(rank_violin_ct, filename = here("plots", "01_find_tregs", "main_pdf","fig3_rank_violin_ct.png"), width = 5.5, height = 6)
-ggsave(rank_violin_ct, filename = here("plots", "01_find_tregs", "main_pdf","fig3_rank_violin_ct.pdf"), width = 5.5, height = 6)
+# ggsave(rank_violin_ct, filename = here(plot_dir, "main_pdf","fig3_rank_violin_ct.png"), width = 5.5, height = 6)
+ggsave(rank_violin_ct, filename = here(plot_dir, "main_pdf","fig3_rank_violin_ct.pdf"), width = 5.5, height = 6)
 
 #### Linear modeling ####
 load(here("processed-data", "01_find_tregs", "lmfit.Rdata"), verbose = TRUE) # tt
 
 ## bind with rank invar data
-invar_t <- tt %>% rownames_to_column("gene") %>%
-  left_join(rank_invar_df %>% select(-Symbol)) %>%
-  left_join(gene_symbol) %>%
-  left_join(genes_of_interest) %>%
+invar_t <- tt %>% rownames_to_column("ensembl_id") %>%
+  left_join(gene_metrics) %>%
   mutate(Signif = cut(adj.P.Val, c(0, 0.001 ,0.01, 0.05, 1), include.lowest = TRUE),
-         canidate = Symbol %in% treg_list[1:4],
-         dotdot = Symbol %in% dotdotdot_genes,
-         probe = Symbol %in% probe_list$Gene.Symbol,
-         gene_anno = ifelse(rank_invar %in% 1:5, "RI Worst", gene_anno)
-  ) %>%
-  replace_na(list(gene_anno = "other"))
+         gene_anno = case_when(
+           grepl("HK",`Gene Type`) ~ `Gene Type`,
+           !top50 ~ "Fail 50% Exp.",
+           !PropZero_filter ~ "Fail Prop. Zero",
+           TRUE ~ "RI"),
+         label = !is.na(`Gene Type`),
+         alpha = ifelse(label, 1, 0.2)
+  )
 
-invar_t %>% filter(dotdot)
-invar_t %>% filter(canidate)
 invar_t %>% dplyr::count(gene_anno)
-invar_t %>% dplyr::count(probe, gene_anno)
-invar_t %>% dplyr::count(probe)
-#   probe     n
-# 1 FALSE 20238
-# 2  TRUE  2800
+#                gene_anno     n
+# 1             Classic HK    12
+# 2         Data Driven HK     8
+# 3   Fail 50% Exp. Filter 11516
+# 4 Fail Prop. Zero Filter 10625
+# 5                     RI   877
 invar_t %>% dplyr::count(Signif)
 #         Signif     n
 # 1    [0,0.001] 23000
@@ -233,28 +237,50 @@ invar_t %>% dplyr::count(Signif)
 # 3  (0.01,0.05]    11
 # 4     (0.05,1]    14
 
-invar_t %>% filter(!is.na(rank_invar)) %>% dplyr::count(gene_anno)
 
-invar_t_scatter <- ggplot(invar_t, aes(x = t, y = rank_invar))+
-  geom_point(aes(color = probe)) +
-  geom_point(data= filter(invar_t, canidate), aes(fill = probe), shape=21, color = "black") +
-  geom_text_repel(aes(label = ifelse(canidate, Symbol, NA)), size = 3) +
-  labs(title = "Model: log2(counts + 1) ~ log2(sum) + cellType") +
-  theme_bw()
+## t-stat plots
+## scatter
+sig_colors <- c(RColorBrewer::brewer.pal(4, "Set1"))
+names(sig_colors) <- levels(invar_t$Signif)
 
-ggsave(invar_t_scatter, filename = here("plots", "01_find_tregs", "rank_invar_t_scatter.png"))
+invar_t_scatter <- invar_t %>%
+  filter(gene_anno == "RI") %>% 
+  ggplot(aes(x = rank_invar, y = t))+
+  geom_point(aes(color = Signif, alpha = alpha)) +
+  geom_point(data= filter(invar_t, label), shape=21, color = "black") +
+  geom_text_repel(aes(label = ifelse(label, Symbol, NA)), size = 3) +
+  scale_color_manual(values = sig_colors, drop = FALSE) +
+  ylim(0,400) +
+  theme_bw() +
+  scale_alpha(guide = "none") +
+  labs(x = "Rank Invariance") +
+  theme(text = element_text(size=15))
 
+# ggsave(invar_t_scatter, filename = here(plot_dir, "explore" ,"rank_invar_t_scatter.png"), width = 4.5, height = 6.3)
+ggsave(invar_t_scatter, filename = here(plot_dir, "supp_pdf" ,"rank_invar_t_scatter.pdf"), width = 6, height = 6.3)
+
+## Denisity/jitter plot
 pos <- position_jitter(width = 0.3, seed = 2)
-invar_t_density <- ggplot(invar_t, aes(x = gene_anno, y = t))+
-  geom_jitter(aes(color = Signif), position = pos) +
-  geom_text_repel(aes(label = ifelse(gene_anno != "other", Symbol, NA), color = probe), size = 3, position = pos) +
-  labs(title = "Model: log2(counts + 1) ~log2(sum) + cellType") +
-  theme_bw()
+invar_t_density <- invar_t %>%
+  filter(gene_anno != "RI") %>%
+  ggplot(aes(x = gene_anno, y = t))+
+  geom_point(aes(color = Signif, alpha = alpha), position = pos) +
+  geom_text_repel(aes(label = ifelse(label, paste0("italic('",Symbol,"')"), NA)), 
+                      size = 3, position = pos, parse = TRUE) +
+  scale_color_manual(values = sig_colors, drop = FALSE) +
+  ylim(0,400) +
+  theme_bw()+ 
+  theme(legend.position="none",
+        text = element_text(size=15),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.x=element_blank()
+        ) 
 
-ggsave(invar_t_density , filename = here("plots", "01_find_tregs", "rank_invar_t_densitiy.png"), width = 9)
+ggsave(invar_t_density , filename = here(plot_dir,"explore", "rank_invar_t_densitiy.png"), width = 5)
+ggsave(invar_t_density , filename = here(plot_dir,"supp_pdf", "rank_invar_t_densitiy.pdf"), width = 5)
 
 #### Fig 3. Do Expression trends over cell type track in our HK genes? ####
-hk_counts <- log2(as.matrix(assays(sce_pan_unfiltered[genes_of_interest$gene,])$counts)+1)
+hk_counts <- log2(as.matrix(assays(sce_pan[genes_of_interest$gene,])$counts)+1)
 
 counts_long <- as.data.frame(hk_counts)%>% 
   rownames_to_column("gene") %>%
@@ -262,8 +288,7 @@ counts_long <- as.data.frame(hk_counts)%>%
   left_join(pd %>% rownames_to_column("ID") %>% select(ID, cellType.Broad,sum)) %>%
   mutate(logsum = log2(sum)) %>%
   left_join(genes_of_interest)%>%
-  left_join(invar_t %>% select(gene, t, adj.P.Val))
-
+  left_join(invar_t %>% select(gene = ensembl_id, t, adj.P.Val))
 
 counts_long$Symbol <- factor(counts_long$Symbol)
 counts_long$Symbol <- fct_reorder(counts_long$Symbol, counts_long$t, max)
@@ -284,7 +309,7 @@ hk_sum_scatter <- counts_long %>%
   theme_bw() +
   labs(x = "log2(sum)", y = "log2(count + 1)")
 
-ggsave(hk_sum_scatter, filename = here("plots","HK_gene","hk_sum_scatter.png"), width = 12, height = 10)
+ggsave(hk_sum_scatter, filename = here(plot_dir,"explore","hk_sum_scatter.png"), width = 12, height = 10)
 
 hk_sum_smooth <- counts_long %>% 
   ggplot() +
@@ -295,18 +320,7 @@ hk_sum_smooth <- counts_long %>%
   theme_bw() +
   labs(x = "log2(sum)", y = "log2(count + 1)")
 
-ggsave(hk_sum_smooth, filename = here("plots","HK_gene","hk_sum_smooth.png"), width = 12, height = 10)
-
-hk_sum_scatter <- counts_long %>% 
-  filter(Symbol == "MALAT1") %>% 
-  ggplot(aes(logsum, logcount, color = cellType.Broad)) +
-  geom_point(alpha = 0.5, size = 0.5) +
-  geom_smooth(method = "lm") +
-  scale_color_manual(values = cell_colors) +
-  theme_bw() +
-  labs(x = "log2(sum)", y = "log2(count + 1)", title = "MALAT1")
-
-ggsave(hk_sum_scatter, filename = here("plots","HK_gene","hk_sum_scatter_MALAT1.png"), width = 8)
+ggsave(hk_sum_smooth, filename = here(plot_dir,"explore","hk_sum_smooth.png"), width = 12, height = 10)
 
 ## Figure 3c
 hk_sum_scatter_main <- counts_long %>% 
@@ -320,38 +334,39 @@ hk_sum_scatter_main <- counts_long %>%
   coord_equal() +
   labs(x = "log2(sum)", y = "log2(count + 1)") +
   theme(legend.position="None",
-        text = element_text(size=15)) 
+        text = element_text(size=15),
+        strip.text.x = element_text(face="italic")) 
 
-# ggsave(hk_sum_scatter_main, filename = here("plots","HK_gene","main_pdf","fig3_hk_sum_scatter_MALAT1.png"), width = 4.5, height = 5)
-ggsave(hk_sum_scatter_main, filename = here("plots","HK_gene","main_pdf","fig3_hk_sum_scatter_MALAT1.pdf"), width = 4.5, height = 5)
+# ggsave(hk_sum_scatter_main, filename = here("plots","01_find_tregs","main_pdf","fig3_hk_sum_scatter_MALAT1.png"), width = 4.5, height = 5)
+ggsave(hk_sum_scatter_main, filename = here(plot_dir, "main_pdf","fig3_hk_sum_scatter_MALAT1.pdf"), width = 4.5, height = 5)
 
 
 hk_sum_smooth2 <- counts_long %>% 
-  filter((gene_anno == "RI Canidate" | Symbol == "POLR2A") &  Symbol != "MALAT1") %>%
+  filter(Symbol %in% c("AKT3","ARID1B","POLR2A")) %>%
   ggplot() +
   geom_smooth(aes(logsum, logcount, color = cellType.Broad), method = "lm") +
   facet_wrap(~Symbol, scales = "free_y", nrow = 1) +
-  # geom_text(data = model_anno, aes(label = anno), x = 7.5, y = 12, vjust = "inward", hjust = "inward") +
   scale_color_manual(values = cell_colors) +
   theme_bw() +
   labs(x = "log2(sum)", y = "log2(count + 1)") +
   theme(legend.position = "None")
 
-ggsave(hk_sum_smooth2, filename = here("plots","HK_gene","hk_sum_smooth2.png"), width = 12, height = 5)
+ggsave(hk_sum_smooth2, filename = here("plots","01_find_tregs","explore","hk_sum_smooth2.png"), width = 12, height = 5)
 
 ## Figure 3d
 hk_sum_smooth2_main <- counts_long %>% 
-  filter((gene_anno == "RI Canidate" | Symbol == "POLR2A") &  Symbol != "MALAT1") %>%
+  filter(Symbol %in% c("AKT3","ARID1B","POLR2A")) %>%
   ggplot() +
   geom_smooth(aes(logsum, logcount, color = cellType.Broad), method = "lm") +
   facet_wrap(~Symbol, scales = "free_y", ncol = 1) +
   scale_color_manual(values = cell_colors) +
   theme_bw() +
   labs(x = "log2(sum)", y = "log2(count + 1)") +
-  theme(legend.position = "None", text = element_text(size=15))
+  theme(legend.position = "None", text = element_text(size=15),
+        strip.text.x = element_text(face="italic"))
 
-# ggsave(hk_sum_smooth2_main, filename = here("plots","HK_gene","main_pdf","fig3_hk_sum_smooth2.png"), width = 4, height = 5)
-ggsave(hk_sum_smooth2_main, filename = here("plots","HK_gene","main_pdf","fig3_hk_sum_smooth2.pdf"), width = 4, height = 5)
+# ggsave(hk_sum_smooth2_main, filename = here("plots","01_find_tregs","main_pdf","fig3_hk_sum_smooth2.png"), width = 4, height = 5)
+ggsave(hk_sum_smooth2_main, filename = here("plots","01_find_tregs","main_pdf","fig3_hk_sum_smooth2.pdf"), width = 4, height = 5)
 
 gene_slopes <- counts_long %>% group_by(Symbol) %>%
   do(fitQSV = broom::tidy(lm(logcount ~ logsum, data = .))) %>%
@@ -371,9 +386,9 @@ hk_sum_scatter_AKT3 <- counts_long %>%
   scale_color_manual(values = cell_colors) +
   theme_bw()
 
-ggsave(hk_sum_scatter_AKT3, filename = here("plots","HK_gene","hk_sum_scatter_AKT3.png"), width = 11)
+ggsave(hk_sum_scatter_AKT3, filename = here("plots","01_find_tregs","explore","hk_sum_scatter_AKT3.png"), width = 11)
 
-pdf(here("plots","HK_gene","hk_sum_scatter_smooth.pdf"), width = 11, height = 8)
+pdf(here("plots","01_find_tregs","explore","hk_sum_scatter_smooth.pdf"), width = 11, height = 8)
 for(g in levels(counts_long$Symbol)){
   message(g)
   st = model_anno %>% filter(Symbol == g) %>% pull(anno)
@@ -397,7 +412,7 @@ for(g in levels(counts_long$Symbol)){
 dev.off()
 
 
-# sgejobs::job_single('housekeeper_genes_plots', create_shell = TRUE, queue= 'bluejay', memory = '50G', command = "Rscript housekeeper_genes_plots.R")
+# sgejobs::job_single('TREG_snRNA-seq_plots', create_shell = TRUE, queue= 'bluejay', memory = '25G', command = "Rscript TREG_snRNA-seq_plots.R")
 ## Reproducibility information
 print("Reproducibility information:")
 Sys.time()
