@@ -6,8 +6,6 @@ library(VennDiagram)
 library(ggrepel)
 library(here)
 
-
-
 #### Fig 1. Demo Rank Distribution ####
 set.seed(10)
 demo_rank_data <- tibble(sample = 1:100,
@@ -38,30 +36,47 @@ sce_pan$region2[sce_pan$region2 == "NAC"] <- "NAc"
 sce_pan$region2[sce_pan$cellType.Broad %in% c("Macro", "Mural", "Endo", "Tcell")] <- "combined"
 table(sce_pan$region2)
 
-sce_pan$ctXregion <-paste0(sce_pan$cellType.Broad, "_" ,sce_pan$region)
+sce_pan$ctXregion <-paste0(sce_pan$cellType.Broad, "_" ,sce_pan$region2)
+
+pd <- as.data.frame(colData(sce_pan))
+
+#### Annotate Genes ####
+gene_metrics <- read.csv(here("processed-data", "01_find_tregs","supp_tables", "gene_metrics.csv"), row.names = 1)
 
 gene_symbol <- rowData(sce_pan) %>% 
   as.data.frame() %>%
   select(gene = gene_id, Symbol)
 
+### TREGs Chosen from top 10 RI gene for probe availability
+treg_list <- c("MALAT1", "AKT3", "ARID1B")
+
+# classic HK genes
 dotdotdot_genes <- c("POLR2A","PPIB","UBC","HPRT1","ACTB","TUBB3","BIN1","LDHA",
                      "GAPDH","PGK1","BHLHE22","CPLX2")
 
-### Chosen from top 10 RI gene for probe availability
-rank_canidate_list <- c("MALAT1", "AKT3", "ARID1B")
-
-# data_driven_HK <- c("NDUFB4", "NDUFB1", "GSTO1", "AMZ2", "POLR2I", "NDUFA3", "RRAGA", "POMP")
+data_driven_HK <- c("NDUFB4", "NDUFB1", "GSTO1", "AMZ2", "POLR2I", "NDUFA3", "RRAGA", "POMP")
   
-rank_canidate_genes <- gene_symbol %>%
-  filter(Symbol %in% c(rank_canidate_list,"POLR2A"))
+(candidate_genes <- gene_symbol %>%
+  filter(Symbol %in% c(treg_list,"POLR2A")))
 
-genes_of_interest <- tibble(Symbol = c(rank_canidate_list, dotdotdot_genes),
-                              gene_anno = c(rep("RI Canidate", length(rank_canidate_list)),
-                                            rep("Classic HK", length(dotdotdot_genes))
-                                            # rep("Data Driven HK", length(data_driven_HK))
+
+genes_of_interest <- tibble(Symbol = c(treg_list, dotdotdot_genes, data_driven_HK),
+                              gene_anno = c(rep("TREG Canidate", length(treg_list)),
+                                            rep("Classic HK", length(dotdotdot_genes)),
+                                            rep("Data Driven HK", length(data_driven_HK))
                                             )
                             ) %>%
   left_join(gene_symbol)
+
+## annotate gene metrics
+gene_metrics <- gene_metrics %>%
+  left_join(genes_of_interest %>% select(Symbol, `Gene Type` = gene_anno)) 
+
+gene_metrics %>%
+  filter(!is.na(`Gene Type`))
+
+gene_metrics %>%
+  filter(Symbol %in% candidate_genes$Symbol)
 
 #### Proportion zero plots ####
 propZero_limit <- 0.75
@@ -131,7 +146,7 @@ ggsave(propZero_density_rare, filename = here("plots", "01_find_tregs", "supp_pd
 
 #### Demo filtering ####
 filter_demo <- gene_symbol %>% 
-  filter(Symbol %in% c(rank_canidate_list, "POLR2A")) %>%
+  filter(Symbol %in% c(treg_list, "POLR2A")) %>%
   left_join(gene_propZero_long)
 
 filter_anno <- filter_demo %>% 
@@ -145,122 +160,50 @@ filter_demo_scatter <- ggplot(filter_demo, aes(x = Symbol, y = propZero)) +
   geom_hline(yintercept = propZero_limit, color = "red", linetype = "dashed") +
   theme_bw() +
   theme(text = element_text(size=15), 
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_text(angle = 90, hjust = 1, face="italic"))
 
 # ggsave(filter_demo_scatter, filename = here("plots", "01_find_tregs", "main_pdf","fig2b_propZero_filter_demo.png"), width = 4, height = 7)
 ggsave(filter_demo_scatter, filename = here("plots", "01_find_tregs", "main_pdf","fig2b_propZero_filter_demo.pdf"), width = 4, height = 7)
 
 #### Fig 3. Real Rank Distribution ####
-load(here("data", "rank_invar.Rdata"), verbose = TRUE)
+load(here("processed-data", "01_find_tregs", "rank_df_subset.Rdata"), verbose = TRUE) 
+# 4 canidiate genes * 70k nuclei
+dim(rank_df_subset)
+# [1]     4 70527 
+corner(rank_df_subset)
 
-## takes like 50 min
-# rank_df <- apply(as.matrix(assays(sce_pan)$logcounts), 2, rank) %>%
-#   as.data.frame()
-# 
-# save(rank_df, file = here("processed-data", "01_find_tregs", "rank_df.Rdata")) 
-load(here("processed-data", "01_find_tregs", "rank_df.Rdata"), verbose = TRUE) 
-dim(rank_df)
-corner(rank_df)
-
-rank_test <- rank_df %>%
+rank_long <- rank_df_subset %>%
   rownames_to_column("gene") %>%
-  filter(gene %in% rank_canidate_genes$gene) %>%
   pivot_longer(!gene, names_to = "Sample", values_to = "rank") %>%
   left_join(gene_symbol) %>%
   left_join(pd %>% select(Sample = uniqueID, cellType.Broad))
 
-rank_violin <- ggplot(rank_test, aes(x = Symbol, y = rank)) +
+rank_violin <- ggplot(rank_long, aes(x = Symbol, y = rank)) +
   geom_violin(fill = "light grey", scale = "width") +
   labs(x = "Gene") +
   theme_bw() +
   theme(text = element_text(size=15), 
-        axis.text.x = element_text(angle = 90, hjust = 1)) 
+        axis.text.x = element_text(angle = 90, hjust = 1, face="italic")) 
 
 # ggsave(rank_violin, filename = here("plots", "01_find_tregs", "main_pdf","fig3_rank_violin.png"), width = 3, height = 6)
 ggsave(rank_violin, filename = here("plots", "01_find_tregs", "main_pdf","fig3_rank_violin.pdf"), width = 3, height = 6)
 
-rank_violin_ct <- ggplot(rank_test, aes(x = cellType.Broad, y = rank, fill = cellType.Broad)) +
+rank_violin_ct <- ggplot(rank_long, aes(x = cellType.Broad, y = rank, fill = cellType.Broad)) +
   geom_violin(scale = "width") +
   labs(x = "Cell Type") +
   facet_wrap(~Symbol, ncol = 2) +
   scale_fill_manual(values = cell_colors) +
   theme_bw() +
-  theme(text = element_text(size=15), legend.position = "none", axis.text.x = element_text(angle = 90, hjust = 1)) 
+  theme(text = element_text(size=15), 
+        legend.position = "none",
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        strip.text.x = element_text(face="italic")) 
 
 # ggsave(rank_violin_ct, filename = here("plots", "01_find_tregs", "main_pdf","fig3_rank_violin_ct.png"), width = 5.5, height = 6)
 ggsave(rank_violin_ct, filename = here("plots", "01_find_tregs", "main_pdf","fig3_rank_violin_ct.pdf"), width = 5.5, height = 6)
 
-#### Expression Plots ####
-rownames(sce_pan) <- rowData(sce_pan)$Symbol
-
-classic_hk <- c("POLR2A","GAPDH")
-classic_hk %in% rownames(sce_pan)
-hk_expr_classic <- plotExpression(sce_pan,
-                                    exprs_values = "logcounts",
-                                    features = classic_hk,
-                                    x = "cellType.Broad",
-                                    colour_by = "cellType.Broad",
-                                    point_alpha = 0.5,
-                                    point_size = 0.2,
-                                    add_legend = F) +
-  theme_classic() +
-  theme(legend.position = "None", axis.text.x = element_text(angle = 90, hjust = 1)) +
-  scale_color_manual(values = cell_colors) +
-  stat_summary(fun = mean, fun.min = mean, fun.max = mean, geom = "crossbar", width = 0.3)
-
-ggsave(hk_expr_classic, filename = here("plots", "01_find_tregs", "expr_HK_classic.png"), height = 5)
-
-
-(genes_of_intrest <- c(head(rank_invar_df, 10)$Symbol))
-# [1] "MALAT1"     "JMJD1C"     "FTX"        "MACF1"      "AKT3"       "TNRC6B"     "AC016831.7" "ZFAND3"    
-# [9] "ARID1B"     "CADM2"      "POLR2A"    
-all(genes_of_intrest %in% rownames(sce_pan))
-
-marker_expr_plots <- plotExpression(sce_pan,
-                                    exprs_values = "logcounts",
-                                    features = genes_of_intrest,
-                                    x = "cellType.Broad",
-                                    colour_by = "cellType.Broad",
-                                    point_alpha = 0.5,
-                                    point_size = 0.2,
-                                    add_legend = F) +
-  theme_classic() +
-  theme(legend.position = "None", axis.text.x = element_text(angle = 90, hjust = 1)) +
-  scale_color_manual(values = cell_colors) +
-  stat_summary(fun = mean, fun.min = mean, fun.max = mean, geom = "crossbar", width = 0.3)
-
-ggsave(marker_expr_plots, filename = here("plots", "01_find_tregs", "expr_HK_check.png"), width = 12)
-
-## cell type + region
-marker_expr_region_plots <- plotExpression(sce_pan,
-                                           exprs_values = "logcounts",
-                                           features = genes_of_intrest,
-                                           x = "ctXregion",
-                                           colour_by = "cellType.Broad",
-                                           point_alpha = 0.5,
-                                           point_size = 0.2,
-                                           add_legend = F) +
-  theme_classic() +
-  theme(legend.position = "None", axis.text.x = element_text(angle = 90, hjust = 1)) +
-  scale_color_manual(values = cell_colors) +
-  stat_summary(fun = mean, fun.min = mean, fun.max = mean, geom = "crossbar", width = 0.3)
-
-ggsave(marker_expr_region_plots, filename = here("plots", "01_find_tregs", "expr_HK_check_region.png"), width = 12)
-
-#### Check For SCZ Assiciztion####
-load("/dcl01/ajaffe/data/lab/qsva_brain/brainseq_phase2_qsv/rdas/dxStats_dlpfc_filtered_qSVA_noHGoldQSV_matchDLPFC.rda")
-s_genes <- subset(outGene, adj.P.Val < 0.05)
-map(top20, ~.x %in% s_genes)
-
-
 #### Linear modeling ####
-all(dotdotdot_genes %in% rowData(sce_pan_unfiltered)$Symbol)
-
-load(here("data" , "HK_gene", "lmfit.Rdata"), verbose = TRUE) # tt
-probe_list <- read.csv(here("data" , "HK_gene", "ADC_RNAscope_Probelist2017_human.csv"))
-dim(probe_list)
-
-genes_of_interest %>% filter(!Symbol %in% probe_list$Gene.Symbol)
+load(here("processed-data", "01_find_tregs", "lmfit.Rdata"), verbose = TRUE) # tt
 
 ## bind with rank invar data
 invar_t <- tt %>% rownames_to_column("gene") %>%
@@ -268,7 +211,7 @@ invar_t <- tt %>% rownames_to_column("gene") %>%
   left_join(gene_symbol) %>%
   left_join(genes_of_interest) %>%
   mutate(Signif = cut(adj.P.Val, c(0, 0.001 ,0.01, 0.05, 1), include.lowest = TRUE),
-         canidate = Symbol %in% rank_canidate_list[1:4],
+         canidate = Symbol %in% treg_list[1:4],
          dotdot = Symbol %in% dotdotdot_genes,
          probe = Symbol %in% probe_list$Gene.Symbol,
          gene_anno = ifelse(rank_invar %in% 1:5, "RI Worst", gene_anno)
