@@ -5,8 +5,9 @@ library(SingleCellExperiment)
 library(jaffelab)
 library(broom)
 
+plot_dir <- "plots/02_analyze_halo"
 ## new cell colors ##
-load(here("data", "cell_colors.Rdata"), verbose = TRUE)
+load(here("processed-data","00_data_prep", "cell_colors.Rdata"), verbose = TRUE)
 halo_colors <- c(cell_colors[c("Oligo", "Excit", "Inhib")],
                  c("Multi" = '#4E586A',
                    "Other" = "#90A583")
@@ -15,7 +16,7 @@ halo_colors <- c(cell_colors[c("Oligo", "Excit", "Inhib")],
 halo_colors2 <- halo_colors[c("Oligo", "Excit", "Inhib")]
 
 #### 10x snRNA-seq data ####
-load(here("data","sce_pan.v2.Rdata"), verbose = TRUE)
+load(here("raw-data","sce_pan.v2.Rdata"), verbose = TRUE)
 
 ## filter to just DLPFC data & RI genes
 sce_pan <- sce_pan[,sce_pan$region == "dlpfc"]
@@ -129,7 +130,7 @@ ggsave(sn_sum_boxplot_main+
        filename = here("plots", "HK_gene","main_figs", "fig5_sn_sum_boxplot.png"))
 
 #### Load Halo Data ####
-load(here("data", "HK_gene", "halo", "halo_all.rda"), verbose = TRUE)
+load(here("processed-data", "02_analyze_halo","halo_all.rda"), verbose = TRUE)
 
 halo_all$cell_type <- factor(halo_all$cell_type, names(halo_colors))
 ## Summary table
@@ -146,21 +147,25 @@ halo_all$cell_type <- factor(halo_all$cell_type, names(halo_colors))
               `Number cells after filtering` = sum(!region_filter)) %>%
     left_join(cell_type_wide))
 
- write_csv(rna_scope_summary, file = here("data", "HK_gene", "RNAscope_summary.csv"))
+ write_csv(rna_scope_summary, file = here("processed-data", "02_analyze_halo", "RNAscope_summary.csv"))
  
-## Filter for rest of the plots
-halo_all <- halo_all %>% 
-  mutate(cell_type_simple = ifelse(cell_type == "Multi", "Other", cell_type))
+ ## mean number nuclei
+ mean(rna_scope_summary$`Number cells after filtering`)
+ # [1] 91743.78
+ 
+# ## Filter for rest of the plots
+# halo_all <- halo_all %>% 
+#   mutate(cell_type_simple = ifelse(cell_type == "Multi", "Other", cell_type))
 
-halo_all %>% dplyr::count(cell_type_simple)
+# halo_all %>% dplyr::count(cell_type_simple)
 
 nrow(halo_all)
-# [1] 1260411
+# [1] 1171800
 
 #### Filter Bad Regions ####
 halo_all <- halo_all %>% filter(!region_filter)
 nrow(halo_all)
-# [1] 1182371
+# [1] 1099931
 
 #### Number of Cells Per Sample ####
 n_cells <- halo_all %>%
@@ -174,7 +179,7 @@ n_cells_barplot <- ggplot(n_cells, aes(x = Sample, y = n, fill = GeneTarget)) +
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave(n_cells_barplot, filename = here("plots", "HK_gene","halo", "n_cells_sample.png"))
+ggsave(n_cells_barplot, filename = here(plot_dir,"explore", "n_cells_sample.png"))
 
 #### Proportion Cells with RI gene ####
 RI_hit_barplot <- ggplot(halo_all, aes(x = Sample2, fill = RI_hit)) +
@@ -183,7 +188,7 @@ RI_hit_barplot <- ggplot(halo_all, aes(x = Sample2, fill = RI_hit)) +
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave(RI_hit_barplot, filename = here("plots", "HK_gene","halo", "RI_hit_barplot.png"))
+ggsave(RI_hit_barplot, filename = here(plot_dir, "explore", "RI_hit_barplot.png"))
 
 n_cells <- n_cells %>% select(Sample, n)
 
