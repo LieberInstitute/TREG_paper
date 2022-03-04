@@ -1,0 +1,272 @@
+Adding LIBD modules
+Loading git
+Loading LIBD module for git-status-size/github
+Loading LIBD module for git-lfs/2.8.0
+Loading LIBD module for rmate/1.5.9
+Loading LIBD module for ruby/2.6.4p104
+Loading conda_R/4.1.x
+**** Job starts ****
+Thu Mar  3 19:42:07 EST 2022
+**** JHPCE info ****
+User: lhuuki
+Job id: 9320630
+Job name: build_halo_all
+Hostname: compute-095.cm.cluster
+Task id: undefined
+Unloading conda_R/4.1.x
+Loading conda_R/4.1.x
+
+Currently Loaded Modules:
+  1) matlab/R2019a     6) COMMUNITY_CENTOS7_DEFAULT_ENV  11) ruby/2.6.4p104
+  2) stata/17          7) JHPCE_CENTOS7_DEFAULT_ENV      12) rmate/1.5.9
+  3) JHPCE_tools/1.0   8) git-status-size/github         13) conda/3-4.6.14
+  4) sge/8.1.9         9) git/2.28.0                     14) conda_R/4.1.x
+  5) gcc/4.4.7        10) git-lfs/2.8.0
+
+ 
+
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ ggplot2 3.3.5     ✔ purrr   0.3.4
+✔ tibble  3.1.6     ✔ dplyr   1.0.8
+✔ tidyr   1.2.0     ✔ stringr 1.4.0
+✔ readr   2.1.2     ✔ forcats 0.5.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+here() starts at /dcs04/lieber/lcolladotor/deconvolution_LIBD4030/TREG_paper
+  AKT3 ARID1B     PM 
+301310 285330 292580 
+$AKT3
+ [1] "Image.Location"                      
+ [2] "Analysis.Region"                     
+ [3] "Algorithm.Name"                      
+ [4] "Object.Id"                           
+ [5] "XMin"                                
+ [6] "XMax"                                
+ [7] "YMin"                                
+ [8] "YMax"                                
+ [9] "DAPI.AKT3"                           
+[10] "MBP.AKT3"                            
+[11] "SLC17A7.AKT3"                        
+[12] "GAD1.AKT3"                           
+[13] "MBP"                                 
+[14] "SLC17A7"                             
+[15] "GAD1"                                
+[16] "MBP..Opal.520..Positive"             
+[17] "MBP..Opal.520..Positive.Nucleus"     
+[18] "MBP..Opal.520..Nucleus.Intensity"    
+[19] "SCL17A7..Opal.690..Positive"         
+[20] "SCL17A7..Opal.690..Positive.Nucleus" 
+[21] "SCL17A7..Opal.690..Nucleus.Intensity"
+[22] "GAD1..Opal.620..Positive"            
+[23] "GAD1..Opal.620..Positive.Nucleus"    
+[24] "GAD1..Opal.620..Nucleus.Intensity"   
+[25] "DAPI..DAPI..Positive"                
+[26] "DAPI..DAPI..Positive.Nucleus"        
+[27] "DAPI..DAPI..Nucleus.Intensity"       
+[28] "AKT3..Opal.570..Copies"              
+[29] "AKT3..Opal.570..Area..µm.."          
+[30] "AKT3..Opal.570..Classification"      
+[31] "AKT3..Opal.570..Cell.Intensity"      
+[32] "AKT3..Opal.570..Avg.Intensity"       
+[33] "Cell.Area..µm.."                     
+[34] "Nucleus.Area..µm.."                  
+[35] "Nucleus.Perimeter..µm."              
+[36] "Nucleus.Roundness"                   
+
+$ARID1B
+ [1] "Image.Location"                      
+ [2] "Analysis.Region"                     
+ [3] "Algorithm.Name"                      
+ [4] "Object.Id"                           
+ [5] "XMin"                                
+ [6] "XMax"                                
+ [7] "YMin"                                
+ [8] "YMax"                                
+ [9] "DAPI.ARID1B"                         
+[10] "MBP.ARID1B"                          
+[11] "SLC17A7.ARID1B"                      
+[12] "GAD1.ARID1B"                         
+[13] "MBP"                                 
+[14] "SLC17A7"                             
+[15] "GAD1"                                
+[16] "MBP..Opal.520..Positive"             
+[17] "MBP..Opal.520..Positive.Nucleus"     
+[18] "MBP..Opal.520..Nucleus.Intensity"    
+[19] "SLC17A7..Opal.690..Positive"         
+[20] "SLC17A7..Opal.690..Positive.Nucleus" 
+[21] "SLC17A7..Opal.690..Nucleus.Intensity"
+[22] "GAD1..Opal.620..Positive"            
+[23] "GAD1..Opal.620..Positive.Nucleus"    
+[24] "GAD1..Opal.620..Nucleus.Intensity"   
+[25] "DAPI..DAPI..Positive"                
+[26] "DAPI..DAPI..Positive.Nucleus"        
+[27] "DAPI..DAPI..Nucleus.Intensity"       
+[28] "ARID1B..Opal.570..Copies"            
+[29] "ARID1B..Opal.570..Area..µm.."        
+[30] "ARID1B..Opal.570..Classification"    
+[31] "ARID1B..Opal.570..Cell.Intensity"    
+[32] "ARID1B..Opal.570..Avg.Intensity"     
+[33] "Cell.Area..µm.."                     
+[34] "Nucleus.Area..µm.."                  
+[35] "Nucleus.Perimeter..µm."              
+[36] "Nucleus.Roundness"                   
+
+$PM
+ [1] "Image.Location"                      
+ [2] "Analysis.Region"                     
+ [3] "Algorithm.Name"                      
+ [4] "Object.Id"                           
+ [5] "XMin"                                
+ [6] "XMax"                                
+ [7] "YMin"                                
+ [8] "YMax"                                
+ [9] "DAPI.MALAT1"                         
+[10] "DAPI.POLR2A"                         
+[11] "SLC17A7.MALAT1"                      
+[12] "MBP.MALAT1"                          
+[13] "SLC17A7.POLR2A"                      
+[14] "MBP.POLR2A"                          
+[15] "MBP"                                 
+[16] "SLC17A7"                             
+[17] "SLC17A7..Opal.690..Positive"         
+[18] "SLC17A7..Opal.690..Positive.Nucleus" 
+[19] "SLC17A7..Opal.690..Nucleus.Intensity"
+[20] "MBP..Opal.620..Positive"             
+[21] "MBP..Opal.620..Positive.Nucleus"     
+[22] "MBP..Opal.620..Nucleus.Intensity"    
+[23] "DAPI..DAPI..Positive"                
+[24] "DAPI..DAPI..Positive.Nucleus"        
+[25] "DAPI..DAPI..Nucleus.Intensity"       
+[26] "MALAT1..Opal.520..Copies"            
+[27] "MALAT1..Opal.520..Area..µm.."        
+[28] "MALAT1..Opal.520..Classification"    
+[29] "MALAT1..Opal.520..Cell.Intensity"    
+[30] "MALAT1..Opal.520..Avg.Intensity"     
+[31] "POLR2A..Opal.570..Copies"            
+[32] "POLR2A..Opal.570..Area..µm.."        
+[33] "POLR2A..Opal.570..Classification"    
+[34] "POLR2A..Opal.570..Cell.Intensity"    
+[35] "POLR2A..Opal.570..Avg.Intensity"     
+[36] "Cell.Area..µm.."                     
+[37] "Nucleus.Area..µm.."                  
+[38] "Nucleus.Perimeter..µm."              
+[39] "Nucleus.Roundness"                   
+
+# A tibble: 5 × 2
+  cell_type      n
+  <chr>      <int>
+1 Excit     111728
+2 Inhib      32148
+3 Multi      11026
+4 Oligo     117725
+5 Other     314013
+Joining, by = c("Sample", "ID", "RI_gene")
+# A tibble: 8 × 3
+  RI_gene cell_type      n
+  <chr>   <chr>      <int>
+1 MALAT1  Excit      34064
+2 MALAT1  Multi       1985
+3 MALAT1  Oligo      76688
+4 MALAT1  Other     179843
+5 POLR2A  Excit      34064
+6 POLR2A  Multi       1985
+7 POLR2A  Oligo      76688
+8 POLR2A  Other     179843
+# A tibble: 9 × 2
+  Sample                   n
+  <fct>                <int>
+1 AKT3_Rep#1          102661
+2 AKT3_Rep#2          101475
+3 AKT3_Rep#3           97174
+4 ARID1B_Rep#1        101513
+5 ARID1B_Rep#2         94528
+6 ARID1B_Rep#3         89289
+7 MALAT1/POLR2A_Rep#1 205308
+8 MALAT1/POLR2A_Rep#2 218260
+9 MALAT1/POLR2A_Rep#3 161592
+# A tibble: 12 × 2
+   Sample2           n
+   <chr>         <int>
+ 1 AKT3_Rep#1   102661
+ 2 AKT3_Rep#2   101475
+ 3 AKT3_Rep#3    97174
+ 4 ARID1B_Rep#1 101513
+ 5 ARID1B_Rep#2  94528
+ 6 ARID1B_Rep#3  89289
+ 7 MALAT1_Rep#1 102654
+ 8 MALAT1_Rep#2 109130
+ 9 MALAT1_Rep#3  80796
+10 POLR2A_Rep#1 102654
+11 POLR2A_Rep#2 109130
+12 POLR2A_Rep#3  80796
+# A tibble: 5 × 2
+  cell_type      n
+  <fct>      <int>
+1 Oligo     271101
+2 Excit     179856
+3 Inhib      32148
+4 Multi      14996
+5 Other     673699
+AKT3_Rep#1
+Saving 7 x 7 in image
+AKT3_Rep#2
+Saving 7 x 7 in image
+AKT3_Rep#3
+Saving 7 x 7 in image
+ARID1B_Rep#1
+Saving 7 x 7 in image
+ARID1B_Rep#2
+Saving 7 x 7 in image
+ARID1B_Rep#3
+Saving 7 x 7 in image
+MALAT1/POLR2A_Rep#1
+Saving 7 x 7 in image
+MALAT1/POLR2A_Rep#2
+Saving 7 x 7 in image
+MALAT1/POLR2A_Rep#3
+Saving 7 x 7 in image
+Rows: 19 Columns: 6
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (2): Sample, problem
+dbl (4): X_min, X_max, Y_min, Y_max
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+Error in `select()`:
+! Can't subset columns that don't exist.
+✖ Column `region_filter` doesn't exist.
+Backtrace:
+     ▆
+  1. ├─halo_all %>% select(-region_filter)
+  2. ├─dplyr::select(., -region_filter)
+  3. └─dplyr:::select.data.frame(., -region_filter)
+  4.   ├─dplyr:::tidyselect_fix_call(...)
+  5.   │ └─base::withCallingHandlers(...)
+  6.   └─tidyselect::eval_select(expr(c(...)), .data)
+  7.     └─tidyselect:::eval_select_impl(...)
+  8.       ├─tidyselect:::with_subscript_errors(...)
+  9.       │ ├─base::tryCatch(...)
+ 10.       │ │ └─base tryCatchList(expr, classes, parentenv, handlers)
+ 11.       │ │   └─base tryCatchOne(expr, names, parentenv, handlers[[1L]])
+ 12.       │ │     └─base doTryCatch(return(expr), name, parentenv, handler)
+ 13.       │ └─tidyselect:::with_entraced_errors(expr)
+ 14.       │   └─rlang::try_fetch(...)
+ 15.       │     └─base::withCallingHandlers(...)
+ 16.       └─tidyselect:::vars_select_eval(...)
+ 17.         └─tidyselect:::walk_data_tree(expr, data_mask, context_mask, error_call)
+ 18.           └─tidyselect:::eval_c(expr, data_mask, context_mask)
+ 19.             └─tidyselect:::reduce_sels(node, data_mask, context_mask, init = init)
+ 20.               └─tidyselect:::walk_data_tree(new, data_mask, context_mask)
+ 21.                 └─tidyselect:::as_indices_sel_impl(...)
+ 22.                   └─tidyselect:::as_indices_impl(x, vars, call = call, strict = strict)
+ 23.                     └─tidyselect:::chr_as_locations(x, vars, call = call)
+ 24.                       └─vctrs::vec_as_location(x, n = length(vars), names = vars)
+ 25.                         └─vctrs `<fn>`()
+ 26.                           └─vctrs:::stop_subscript_oob(...)
+ 27.                             └─vctrs:::stop_subscript(...)
+ 28.                               └─rlang::abort(...)
+Execution halted
+**** Job ends ****
+Thu Mar  3 19:46:00 EST 2022
