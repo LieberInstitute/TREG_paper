@@ -1,11 +1,11 @@
-library(tidyverse)
-library(SingleCellExperiment)
-library(scater)
-library(jaffelab)
-library(VennDiagram)
-library(ggrepel)
-library(here)
-
+library("tidyverse")
+library("SingleCellExperiment")
+library("scater")
+library("jaffelab")
+library("VennDiagram")
+library("ggrepel")
+library("here")
+library("sessioninfo")
 
 plot_dir <- "plots/01_find_tregs"
 
@@ -207,77 +207,6 @@ rank_violin_ct <- ggplot(rank_long, aes(x = cellType.Broad, y = rank, fill = cel
 # ggsave(rank_violin_ct, filename = here(plot_dir, "main_pdf","fig3_rank_violin_ct.png"), width = 5.5, height = 6)
 ggsave(rank_violin_ct, filename = here(plot_dir, "main_pdf","fig3_rank_violin_ct.pdf"), width = 5.5, height = 6)
 
-#### Linear modeling ####
-load(here("processed-data", "01_find_tregs", "lmfit.Rdata"), verbose = TRUE) # tt
-
-## bind with rank invar data
-invar_t <- tt %>% rownames_to_column("ensembl_id") %>%
-  left_join(gene_metrics) %>%
-  mutate(Signif = cut(adj.P.Val, c(0, 0.001 ,0.01, 0.05, 1), include.lowest = TRUE),
-         gene_anno = case_when(
-           grepl("HK",`Gene Type`) ~ `Gene Type`,
-           !top50 ~ "Fail 50% Exp.",
-           !PropZero_filter ~ "Fail Prop. Zero",
-           TRUE ~ "RI"),
-         label = !is.na(`Gene Type`),
-         alpha = ifelse(label, 1, 0.2)
-  )
-
-invar_t %>% dplyr::count(gene_anno)
-#                gene_anno     n
-# 1             Classic HK    12
-# 2         Data Driven HK     8
-# 3   Fail 50% Exp. Filter 11516
-# 4 Fail Prop. Zero Filter 10625
-# 5                     RI   877
-invar_t %>% dplyr::count(Signif)
-#         Signif     n
-# 1    [0,0.001] 23000
-# 2 (0.001,0.01]    13
-# 3  (0.01,0.05]    11
-# 4     (0.05,1]    14
-
-
-## t-stat plots
-## scatter
-sig_colors <- c(RColorBrewer::brewer.pal(4, "Set1"))
-names(sig_colors) <- levels(invar_t$Signif)
-
-invar_t_scatter <- invar_t %>%
-  filter(gene_anno == "RI") %>% 
-  ggplot(aes(x = rank_invar, y = t))+
-  geom_point(aes(color = Signif, alpha = alpha)) +
-  geom_point(data= filter(invar_t, label), shape=21, color = "black") +
-  geom_text_repel(aes(label = ifelse(label, Symbol, NA)), size = 3) +
-  scale_color_manual(values = sig_colors, drop = FALSE) +
-  ylim(0,400) +
-  theme_bw() +
-  scale_alpha(guide = "none") +
-  labs(x = "Rank Invariance") +
-  theme(text = element_text(size=15))
-
-# ggsave(invar_t_scatter, filename = here(plot_dir, "explore" ,"rank_invar_t_scatter.png"), width = 4.5, height = 6.3)
-ggsave(invar_t_scatter, filename = here(plot_dir, "supp_pdf" ,"rank_invar_t_scatter.pdf"), width = 6, height = 6.3)
-
-## Denisity/jitter plot
-pos <- position_jitter(width = 0.3, seed = 2)
-invar_t_density <- invar_t %>%
-  filter(gene_anno != "RI") %>%
-  ggplot(aes(x = gene_anno, y = t))+
-  geom_point(aes(color = Signif, alpha = alpha), position = pos) +
-  geom_text_repel(aes(label = ifelse(label, paste0("italic('",Symbol,"')"), NA)), 
-                      size = 3, position = pos, parse = TRUE) +
-  scale_color_manual(values = sig_colors, drop = FALSE) +
-  ylim(0,400) +
-  theme_bw()+ 
-  theme(legend.position="none",
-        text = element_text(size=15),
-        axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.title.x=element_blank()
-        ) 
-
-ggsave(invar_t_density , filename = here(plot_dir,"explore", "rank_invar_t_densitiy.png"), width = 5)
-ggsave(invar_t_density , filename = here(plot_dir,"supp_pdf", "rank_invar_t_densitiy.pdf"), width = 5)
 
 #### Fig 3. Do Expression trends over cell type track in our HK genes? ####
 hk_counts <- log2(as.matrix(assays(sce_pan[genes_of_interest$gene,])$counts)+1)
