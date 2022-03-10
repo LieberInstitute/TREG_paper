@@ -44,8 +44,6 @@ sce_pan$ctXregion <-paste0(sce_pan$cellType.Broad, "_" ,sce_pan$region2)
 pd <- as.data.frame(colData(sce_pan))
 
 #### Annotate Genes ####
-gene_metrics <- read.csv(here("processed-data", "01_find_tregs","supp_tables", "gene_metrics.csv"), row.names = 1)
-
 gene_symbol <- rowData(sce_pan) %>% 
   as.data.frame() %>%
   select(gene = gene_id, Symbol)
@@ -71,15 +69,7 @@ genes_of_interest <- tibble(Symbol = c(treg_list, dotdotdot_genes, data_driven_H
                             ) %>%
   left_join(gene_symbol)
 
-## annotate gene metrics
-gene_metrics <- gene_metrics %>%
-  left_join(genes_of_interest %>% select(Symbol, `Gene Type` = gene_anno)) 
-
-gene_metrics %>%
-  filter(!is.na(`Gene Type`))
-
-gene_metrics %>%
-  filter(Symbol %in% candidate_genes$Symbol)
+write.csv(genes_of_interest, here("processed-data", "01_find_tregs","supp_tables", "genes_of_interest.csv"))
 
 #### Proportion zero plots ####
 propZero_limit <- 0.75
