@@ -8,29 +8,29 @@ library(here)
 #### Prep sce data ####
 load(here("raw-data", "sce_pan.v2.Rdata"), verbose = TRUE)
 summary(sce_pan$sum)
-# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# 102    5766    9813   17282   23563  196431 
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+# 102    5766    9813   17282   23563  196431
 
 #### Find Expression Rank ####
 ## takes like 50 min
 rank_df <- apply(as.matrix(assays(sce_pan)$logcounts), 2, rank) %>%
-  as.data.frame()
+    as.data.frame()
 
 save(rank_df, file = here("processed-data", "01_find_tregs", "rank_df.Rdata"))
 
 ## subset to canididate genes "AKT3"   "ARID1B" "MALAT1" "POLR2A"
-rank_df_subset <- rank_df[c("ENSG00000117020", "ENSG00000049618", "ENSG00000251562", "ENSG00000181222"),]
+rank_df_subset <- rank_df[c("ENSG00000117020", "ENSG00000049618", "ENSG00000251562", "ENSG00000181222"), ]
 save(rank_df_subset, file = here("processed-data", "01_find_tregs", "rank_df_subset.Rdata"))
 
 #### Linear modeling ####
-mod_ct <- model.matrix(~log2(sum) + cellType.Broad, data = colData(sce_pan))
+mod_ct <- model.matrix(~ log2(sum) + cellType.Broad, data = colData(sce_pan))
 
-fit = lmFit(log2(assays(sce_pan)$counts + 1), mod_ct)
-eB = eBayes(fit)
-tt = topTable(eB, coef= "log2(sum)", number= Inf, sort.by = "none")
+fit <- lmFit(log2(assays(sce_pan)$counts + 1), mod_ct)
+eB <- eBayes(fit)
+tt <- topTable(eB, coef = "log2(sum)", number = Inf, sort.by = "none")
 table(tt$adj.P.Val < 0.05)
-# FALSE  TRUE 
-#    14 23024 
+# FALSE  TRUE
+#    14 23024
 
 save(tt, file = here("processed-data", "01_find_tregs", "lmfit.Rdata"))
 
@@ -44,8 +44,8 @@ sessioninfo::session_info()
 
 # [1] "Reproducibility information:"
 # [1] "2022-03-09 14:32:25 EST"
-# user    system   elapsed 
-# 10514.456  2984.844 13510.703 
+# user    system   elapsed
+# 10514.456  2984.844 13510.703
 # ─ Session info ───────────────────────────────────────────────────────────────────────────────────────────────────────
 # setting  value
 # version  R version 4.1.2 Patched (2021-11-04 r81138)
@@ -58,7 +58,7 @@ sessioninfo::session_info()
 # tz       US/Eastern
 # date     2022-03-09
 # pandoc   2.13 @ /jhpce/shared/jhpce/core/conda/miniconda3-4.6.14/envs/svnR-4.1.x/bin/pandoc
-# 
+#
 # ─ Packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 # package              * version  date (UTC) lib source
 # assertthat             0.2.1    2019-03-21 [2] CRAN (R 4.1.0)
@@ -142,12 +142,12 @@ sessioninfo::session_info()
 # xml2                   1.3.3    2021-11-30 [2] CRAN (R 4.1.2)
 # XVector                0.34.0   2021-10-26 [2] Bioconductor
 # zlibbioc               1.40.0   2021-10-26 [2] Bioconductor
-# 
+#
 # [1] /users/lhuuki/R/4.1.x
 # [2] /jhpce/shared/jhpce/core/conda/miniconda3-4.6.14/envs/svnR-4.1.x/R/4.1.x/lib64/R/site-library
 # [3] /jhpce/shared/jhpce/core/conda/miniconda3-4.6.14/envs/svnR-4.1.x/R/4.1.x/lib64/R/library
-# 
+#
 # ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 # **** Job ends ****
 #   Wed Mar  9 14:36:22 EST 2022
-# 
+#

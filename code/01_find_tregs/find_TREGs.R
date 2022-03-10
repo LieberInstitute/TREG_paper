@@ -5,7 +5,7 @@ library(tidyverse)
 library(here)
 library(sessioninfo)
 
-load(here("raw-data","sce_pan.v2.Rdata"), verbose = TRUE)
+load(here("raw-data", "sce_pan.v2.Rdata"), verbose = TRUE)
 
 #### Refine Region Lables ####
 ## Capitalize Regions
@@ -27,13 +27,13 @@ sce_pan$region2[sce_pan$region2 == "NAC"] <- "NAc"
 # Excit   443  2388   623     0  4163
 # Inhib  3117  1580   366 11476  3974
 
-write.csv(nuclei_counts, file = here("processed-data", "01_find_tregs", "supp_tables","nuclei_counts.csv"))
+write.csv(nuclei_counts, file = here("processed-data", "01_find_tregs", "supp_tables", "nuclei_counts.csv"))
 
-## Rare cell types 
+## Rare cell types
 sce_pan$region2[sce_pan$cellType.Broad %in% c("Macro", "Mural", "Endo", "Tcell")] <- "combined"
 table(sce_pan$region2)
 
-sce_pan$ctXregion <-paste0(sce_pan$cellType.Broad, "_" ,sce_pan$region2)
+sce_pan$ctXregion <- paste0(sce_pan$cellType.Broad, "_", sce_pan$region2)
 
 ## Calc sum_counts
 # sce_pan$sum_counts <- colSums(assays(sce_pan)$counts)
@@ -41,15 +41,15 @@ sce_pan$ctXregion <-paste0(sce_pan$cellType.Broad, "_" ,sce_pan$region2)
 #### filter for top 50% expressed of genes ####
 ## record data for each gene
 gene_metrics <- rowData(sce_pan) %>%
-  as.data.frame() %>%
-  select(Symbol = gene_name, ensembl_id = gene_id)
+    as.data.frame() %>%
+    select(Symbol = gene_name, ensembl_id = gene_id)
 
 dim(sce_pan)
 # [1] 23038 70527
 row_means <- rowMeans(assays(sce_pan)$logcounts)
 median_row_means <- median(row_means)
 
-sce_pan <- sce_pan[row_means > median_row_means,]
+sce_pan <- sce_pan[row_means > median_row_means, ]
 dim(sce_pan)
 # [1] 11519 70527
 
@@ -60,9 +60,9 @@ gene_propZero <- get_prop_zero(sce_pan, "ctXregion")
 head(gene_propZero)
 
 ## record max prop zero for gene metrics
-max_propZero <- apply(gene_propZero, 1, max) 
+max_propZero <- apply(gene_propZero, 1, max)
 gene_metrics$max_PropZero <- NA
-gene_metrics[names(max_propZero),]$max_PropZero <- max_propZero
+gene_metrics[names(max_propZero), ]$max_PropZero <- max_propZero
 
 ## filter by Proportion Zero
 propZero_limit <- 0.75
@@ -73,7 +73,7 @@ genes_filtered <- filter_prop_zero(gene_propZero, cutoff = propZero_limit)
 length(genes_filtered)
 # [1] 877
 
-sce_pan <- sce_pan[genes_filtered,]
+sce_pan <- sce_pan[genes_filtered, ]
 dim(sce_pan)
 # [1]   877 70527
 
@@ -85,18 +85,18 @@ assays(sce_pan)$logcounts <- as.matrix(assays(sce_pan)$logcounts)
 rank_invariance <- rank_invariance_express(sce_pan, group_col = "cellType.Broad")
 
 rank_invar_df <- as.data.frame(rank_invariance)
-colnames(rank_invar_df ) <- "rank_invar"
+colnames(rank_invar_df) <- "rank_invar"
 
 ## add to gene metrics
-gene_metrics <- gene_metrics %>% 
-  left_join(rank_invar_df %>% 
-              rownames_to_column("ensembl_id"))
+gene_metrics <- gene_metrics %>%
+    left_join(rank_invar_df %>%
+        rownames_to_column("ensembl_id"))
 
 head(gene_metrics)
 
 gene_metrics %>%
-  arrange(-rank_invar) %>%
-  head(10)
+    arrange(-rank_invar) %>%
+    head(10)
 
 #        Symbol      ensembl_id top50 max_PropZero PropZero_filter rank_invar
 # 1      MALAT1 ENSG00000251562  TRUE  0.004065041            TRUE        877
@@ -115,9 +115,9 @@ write.csv(gene_metrics, file = here("processed-data", "01_find_tregs", "supp_tab
 
 ## Extract RI data for analysis
 rank_invar_df <- gene_metrics %>%
-  filter(!is.na(rank_invar)) %>%
-  select(Symbol, ensembl_id, rank_invar) %>%
-  arrange(-rank_invar)
+    filter(!is.na(rank_invar)) %>%
+    select(Symbol, ensembl_id, rank_invar) %>%
+    arrange(-rank_invar)
 
 head(rank_invar_df, 10)
 # Symbol      ensembl_id rank_invar
@@ -132,7 +132,7 @@ head(rank_invar_df, 10)
 # 9      ARID1B ENSG00000049618        869
 # 10      CADM2 ENSG00000175161        868
 
-save(gene_propZero, rank_invar_df, file = here("processed-data", "01_find_tregs","supp_tables","rank_invar.Rdata"))
+save(gene_propZero, rank_invar_df, file = here("processed-data", "01_find_tregs", "supp_tables", "rank_invar.Rdata"))
 
 # sgejobs::job_single('find_TREGs', create_shell = TRUE, queue= 'bluejay', memory = '25G', command = "Rscript find_TREGs.R")
 
@@ -155,7 +155,7 @@ session_info()
 # tz       US/Eastern
 # date     2022-02-24
 # pandoc   2.13 @ /jhpce/shared/jhpce/core/conda/miniconda3-4.6.14/envs/svnR-4.1.x/bin/pandoc
-# 
+#
 # ─ Packages ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 # package              * version  date (UTC) lib source
 # assertthat             0.2.1    2019-03-21 [2] CRAN (R 4.1.0)
@@ -236,10 +236,10 @@ session_info()
 # xml2                   1.3.3    2021-11-30 [2] CRAN (R 4.1.2)
 # XVector                0.34.0   2021-10-26 [2] Bioconductor
 # zlibbioc               1.40.0   2021-10-26 [2] Bioconductor
-# 
+#
 # [1] /users/lhuuki/R/4.1.x
 # [2] /jhpce/shared/jhpce/core/conda/miniconda3-4.6.14/envs/svnR-4.1.x/R/4.1.x/lib64/R/site-library
 # [3] /jhpce/shared/jhpce/core/conda/miniconda3-4.6.14/envs/svnR-4.1.x/R/4.1.x/lib64/R/library
-# 
+#
 # ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-# 
+#

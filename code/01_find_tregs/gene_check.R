@@ -6,54 +6,58 @@ library("UpSetR")
 library("DeconvoBuddies")
 library("jaffelab")
 
-genes_of_interest <- read.csv(here("processed-data", "01_find_tregs","supp_tables", "genes_of_interest.csv"), row.names = 1)
-gene_metrics <- read.csv(here("processed-data", "01_find_tregs","supp_tables", "gene_metrics.csv"), row.names = 1)
+genes_of_interest <- read.csv(here("processed-data", "01_find_tregs", "supp_tables", "genes_of_interest.csv"), row.names = 1)
+gene_metrics <- read.csv(here("processed-data", "01_find_tregs", "supp_tables", "gene_metrics.csv"), row.names = 1)
 head(gene_metrics)
 
 ## annotate gene metrics
 gene_metrics <- gene_metrics %>%
-  left_join(genes_of_interest %>% select(Symbol, `Gene Type` = gene_anno)) 
+    left_join(genes_of_interest %>% select(Symbol, `Gene Type` = gene_anno))
 
 gene_metrics %>%
-  filter(!is.na(`Gene Type`))
+    filter(!is.na(`Gene Type`))
 
 ## Add T-stats
-load(here("processed-data", "01_find_tregs","lmfit.Rdata"), verbose = TRUE) #tt
+load(here("processed-data", "01_find_tregs", "lmfit.Rdata"), verbose = TRUE) # tt
 tt2 <- tt %>%
-  select(t) %>%
-  rownames_to_column("ensembl_id")
-  
-gene_metrics2 <- gene_metrics %>%
-  left_join(tt2)
+    select(t) %>%
+    rownames_to_column("ensembl_id")
 
-## Marker genes from TRan Maynard et al. 
+gene_metrics2 <- gene_metrics %>%
+    left_join(tt2)
+
+## Marker genes from TRan Maynard et al.
 ## https://github.com/LieberInstitute/10xPilot_snRNAseq-human/blob/810b47364af4c8afe426bd2a6b559bd6a9f1cc98/tables/revision/top40genesLists_DLPFC-n3_cellType_SN-LEVEL-tests_LAH2020.csv
-tran_markers <- read.csv(here("processed-data","00_data_prep","top40genesLists_DLPFC-n3_cellType_SN-LEVEL-tests_LAH2020.csv"))
+tran_markers <- read.csv(here("raw-data", "top40genesLists_DLPFC-n3_cellType_SN-LEVEL-tests_LAH2020.csv"))
 
 tran_markers_long <- tran_markers %>%
-  rownames_to_column("rank") %>%
-  pivot_longer(cols = !rank, names_to = "Marker", values_to = "Symbol") %>%
-  filter(Symbol != "") %>%
-  separate(Marker, into = c("cellType", "test"), "_", extra = "merge", remove = FALSE) %>%
-  separate(test, into = c("cellType_suf", "test"), "_", fill = "left") %>%
-  mutate(cellType = ifelse(is.na(cellType_suf), cellType, paste0(cellType, "_" ,cellType_suf)),
-         test = paste0("Tran_", test)) %>%
-  select(-cellType_suf) 
+    rownames_to_column("rank") %>%
+    pivot_longer(cols = !rank, names_to = "Marker", values_to = "Symbol") %>%
+    filter(Symbol != "") %>%
+    separate(Marker, into = c("cellType", "test"), "_", extra = "merge", remove = FALSE) %>%
+    separate(test, into = c("cellType_suf", "test"), "_", fill = "left") %>%
+    mutate(
+        cellType = ifelse(is.na(cellType_suf), cellType, paste0(cellType, "_", cellType_suf)),
+        test = paste0("Tran_", test)
+    ) %>%
+    select(-cellType_suf)
 
 tran_markers_long %>% count(cellType, test)
 
 ## Make table for Park markers
-park_markers_list <- readLines(here("raw-data","Park_markers_n69.txt"))
-park_markers <- tibble(Symbol = park_markers_list, 
-                       test = "Park")
+park_markers_list <- readLines(here("raw-data", "Park_markers_n69.txt"))
+park_markers <- tibble(
+    Symbol = park_markers_list,
+    test = "Park"
+)
 
 markers_anno <- tran_markers_long %>%
-  select(Symbol, test) %>%
-  rbind(park_markers) %>%
-  group_by(Symbol) %>%
-  mutate(test = ordered(test, levels = c("Tran_1vAll","Tran_pw","Park"))) %>%
-  arrange(test) %>%
-  summarise(Marker = paste0(unique(test), collapse = ","))
+    select(Symbol, test) %>%
+    rbind(park_markers) %>%
+    group_by(Symbol) %>%
+    mutate(test = ordered(test, levels = c("Tran_1vAll", "Tran_pw", "Park"))) %>%
+    arrange(test) %>%
+    summarise(Marker = paste0(unique(test), collapse = ","))
 
 # Marker                      n
 # <chr>                   <int>
@@ -66,7 +70,7 @@ markers_anno <- tran_markers_long %>%
 
 ## export version
 gene_metrics2 <- gene_metrics2 %>%
-  left_join(markers_anno)
+    left_join(markers_anno)
 
 head(gene_metrics2)
 #         Symbol      ensembl_id top50 max_PropZero PropZero_filter rank_invar Gene Type          t Marker
@@ -76,27 +80,30 @@ head(gene_metrics2)
 #   4  LINC00115 ENSG00000225880 FALSE           NA           FALSE         NA      <NA>  18.115699   <NA>
 #   5     FAM41C ENSG00000230368 FALSE           NA           FALSE         NA      <NA>   8.931643   <NA>
 #   6 AL645608.7 ENSG00000272438 FALSE           NA           FALSE         NA      <NA>   6.048259   <NA>
-write.csv(gene_metrics2, here("processed-data", "01_find_tregs","supp_tables", "gene_metrics2.csv"))
+write.csv(gene_metrics2, here("processed-data", "01_find_tregs", "supp_tables", "gene_metrics2.csv"))
 
 
 ## plotting version
-gene_metrics_marker <- gene_metrics2 %>% 
-  rename(gene_type = `Gene Type`) %>%
-  mutate(`Gene Type` = factor(ifelse(!is.na(Marker), Marker, gene_type),
-                              levels = c("TREG Canidate", "Classic HK", "Data Driven HK",
-                                         "Tran_1vAll", "Tran_pw", "Park", "Tran_1vAll,Tran_pw",
-                                         "Tran_1vAll,Park", "Tran_1vAll,Tran_pw,Park", "None"))) %>%
-  replace_na(list(`Gene Type` = "None"))
+gene_metrics_marker <- gene_metrics2 %>%
+    rename(gene_type = `Gene Type`) %>%
+    mutate(`Gene Type` = factor(ifelse(!is.na(Marker), Marker, gene_type),
+        levels = c(
+            "TREG Canidate", "Classic HK", "Data Driven HK",
+            "Tran_1vAll", "Tran_pw", "Park", "Tran_1vAll,Tran_pw",
+            "Tran_1vAll,Park", "Tran_1vAll,Tran_pw,Park", "None"
+        )
+    )) %>%
+    replace_na(list(`Gene Type` = "None"))
 
 ## no overlapping Marker + gene_type annotations
 gene_metrics_marker %>%
-  count(Marker,gene_type, `Gene Type`) %>%
-  arrange(`Gene Type`)
+    count(Marker, gene_type, `Gene Type`) %>%
+    arrange(`Gene Type`)
 
 ## 11 genes are markers + have RI vals
 gene_metrics_marker %>%
-  filter(!is.na(Marker) & !is.na(rank_invar)) %>%
-  arrange(-rank_invar)
+    filter(!is.na(Marker) & !is.na(rank_invar)) %>%
+    arrange(-rank_invar)
 
 #     Symbol      ensembl_id top50 max_PropZero PropZero_filter rank_invar gene_type         t             Marker
 # 1     SIK3 ENSG00000160584  TRUE    0.3762887            TRUE      838.0      <NA> 288.31400 Tran_1vAll,Tran_pw * need to check this one out!
@@ -114,15 +121,16 @@ gene_metrics_marker %>%
 
 #### t-stat plots ####
 gene_metrics_marker2 <- gene_metrics_marker %>%
-  mutate(
-    gene_anno = case_when(
-      !top50 ~ "Fail 50% Exp.",
-      !PropZero_filter ~ "Fail Prop. Zero",
-      TRUE ~ "Evaluated RI"),
-    label1 = Symbol %in% c("ARID1B","AKT3","MALAT1","POLR2A"),
-    label2 = `Gene Type` != "None",
-    alpha = `Gene Type` != "None"
-  )
+    mutate(
+        gene_anno = case_when(
+            !top50 ~ "Fail 50% Exp.",
+            !PropZero_filter ~ "Fail Prop. Zero",
+            TRUE ~ "Evaluated RI"
+        ),
+        label1 = Symbol %in% c("ARID1B", "AKT3", "MALAT1", "POLR2A"),
+        label2 = `Gene Type` != "None",
+        alpha = `Gene Type` != "None"
+    )
 
 gene_metrics_marker2 %>% dplyr::count(gene_anno, `Gene Type`)
 # gene_anno               Gene Type     n
@@ -156,61 +164,67 @@ gene_type_colors <- create_cell_colors(levels(gene_metrics_marker$`Gene Type`), 
 gene_type_colors["None"] <- "grey"
 
 invar_t_scatter <- gene_metrics_marker2 %>%
-  filter(gene_anno == "Evaluated RI") %>% 
-  ggplot(aes(x = rank_invar, y = t))+
-  geom_point(alpha = 0.2, color = "grey") +
-  geom_point(data = filter(gene_metrics_marker2, label2, gene_anno == "Evaluated RI"), 
-             aes(color = `Gene Type`)) +
-  geom_point(data = filter(gene_metrics_marker2, label1, gene_anno == "Evaluated RI"), shape=21, color = "black") +
-  geom_text_repel(aes(label = ifelse(label2, paste0("italic('",Symbol,"')"), NA)),
-                  size = 3, parse = TRUE) +
-  scale_color_manual(values = gene_type_colors, drop = FALSE) +
-  ylim(0,400) +
-  theme_bw() +
-  facet_wrap(~gene_anno)+
-  labs(x = "Rank Invariance", y = "Total RNA t-statistic") +
-  theme(text = element_text(size=15))
+    filter(gene_anno == "Evaluated RI") %>%
+    ggplot(aes(x = rank_invar, y = t)) +
+    geom_point(alpha = 0.2, color = "grey") +
+    geom_point(
+        data = filter(gene_metrics_marker2, label2, gene_anno == "Evaluated RI"),
+        aes(color = `Gene Type`)
+    ) +
+    geom_point(data = filter(gene_metrics_marker2, label1, gene_anno == "Evaluated RI"), shape = 21, color = "black") +
+    geom_text_repel(aes(label = ifelse(label2, paste0("italic('", Symbol, "')"), NA)),
+        size = 3, parse = TRUE
+    ) +
+    scale_color_manual(values = gene_type_colors, drop = FALSE) +
+    ylim(0, 400) +
+    theme_bw() +
+    facet_wrap(~gene_anno) +
+    labs(x = "Rank Invariance", y = "Total RNA t-statistic") +
+    theme(text = element_text(size = 15))
 
-ggsave(invar_t_scatter, filename = here(plot_dir, "explore" ,"rank_invar_t_scatter.png"), width = 6)
-ggsave(invar_t_scatter, filename = here(plot_dir, "supp_pdf" ,"rank_invar_t_scatter.pdf"), width = 6)
+ggsave(invar_t_scatter, filename = here(plot_dir, "explore", "rank_invar_t_scatter.png"), width = 6)
+ggsave(invar_t_scatter, filename = here(plot_dir, "supp_pdf", "rank_invar_t_scatter.pdf"), width = 6)
 
 ## Denisity/jitter plot
 pos <- position_jitter(width = 0.3, seed = 2)
 invar_t_density <- gene_metrics_marker2 %>%
-  filter(gene_anno != "Evaluated RI") %>%
-  ggplot(aes(x = `Gene Type`, y = t))+
-  geom_point(aes(color = `Gene Type`, alpha = alpha), position = pos) +
-  # geom_point(aes(alpha = alpha, color = `Gene Type`), position = pos) +
-  # geom_point(data = filter(gene_metrics_marker2, label2, gene_anno != "Evaluated RI"), 
-  #            aes(fill= `Gene Type`), shape=21, color = "black", position = pos)+
-  geom_text_repel(aes(label = ifelse(label1, paste0("italic('",Symbol,"')"), NA)), 
-                  size = 3, position = pos, parse = TRUE) +
-  scale_color_manual(values = gene_type_colors, drop = FALSE) +
-  facet_wrap(~gene_anno)+
-  ylim(0,400) +
-  theme_bw()+ 
-  labs(y = "Total RNA t-statistic") +
-  theme(legend.position="none",
-        text = element_text(size=15),
+    filter(gene_anno != "Evaluated RI") %>%
+    ggplot(aes(x = `Gene Type`, y = t)) +
+    geom_point(aes(color = `Gene Type`, alpha = alpha), position = pos) +
+    # geom_point(aes(alpha = alpha, color = `Gene Type`), position = pos) +
+    # geom_point(data = filter(gene_metrics_marker2, label2, gene_anno != "Evaluated RI"),
+    #            aes(fill= `Gene Type`), shape=21, color = "black", position = pos)+
+    geom_text_repel(aes(label = ifelse(label1, paste0("italic('", Symbol, "')"), NA)),
+        size = 3, position = pos, parse = TRUE
+    ) +
+    scale_color_manual(values = gene_type_colors, drop = FALSE) +
+    facet_wrap(~gene_anno) +
+    ylim(0, 400) +
+    theme_bw() +
+    labs(y = "Total RNA t-statistic") +
+    theme(
+        legend.position = "none",
+        text = element_text(size = 15),
         axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.title.x=element_blank()
-  ) 
+        axis.title.x = element_blank()
+    )
 
-ggsave(invar_t_density , filename = here(plot_dir,"explore", "rank_invar_t_densitiy.png"), width = 5, height = 7.5)
-ggsave(invar_t_density , filename = here(plot_dir,"supp_pdf", "rank_invar_t_densitiy.pdf"), width = 5, height = 7.5)
+ggsave(invar_t_density, filename = here(plot_dir, "explore", "rank_invar_t_densitiy.png"), width = 5, height = 7.5)
+ggsave(invar_t_density, filename = here(plot_dir, "supp_pdf", "rank_invar_t_densitiy.pdf"), width = 5, height = 7.5)
 
 #### Upset Plots ####
 gene_metrics_filter <- gene_metrics %>% filter(!is.na(`Gene Type`))
 
-gene_lists <- c(list(Park = park_markers_list),
-                map(splitit(tran_markers_long$test), ~tran_markers_long$Symbol[.x]),
-                map(splitit(gene_metrics_filter$`Gene Type`), ~gene_metrics_filter$Symbol[.x])
+gene_lists <- c(
+    list(Park = park_markers_list),
+    map(splitit(tran_markers_long$test), ~ tran_markers_long$Symbol[.x]),
+    map(splitit(gene_metrics_filter$`Gene Type`), ~ gene_metrics_filter$Symbol[.x])
 )
 
 map(gene_lists, head)
 
-pdf(here(plot_dir,"supp_pdf", "upset.pdf"))
-upset(fromList(gene_lists), order.by = "freq",nset = length(gene_lists))
+pdf(here(plot_dir, "supp_pdf", "upset.pdf"))
+upset(fromList(gene_lists), order.by = "freq", nset = length(gene_lists))
 dev.off()
 
 # sgejobs::job_single('gene_check', create_shell = TRUE, queue= 'bluejay', memory = '5G', command = "Rscript gene_check.R")
