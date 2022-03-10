@@ -1,9 +1,9 @@
-library(tidyverse)
-library(here)
-library(DeconvoBuddies)
-library(SingleCellExperiment)
-library(jaffelab)
-library(broom)
+library("tidyverse")
+library("here")
+library("DeconvoBuddies")
+library("SingleCellExperiment")
+library("jaffelab")
+library("broom")
 
 slope_anno <- function(lm_fit, digits = 1) {
     ci <- confint(lm_fit)
@@ -88,7 +88,8 @@ sum_data <- colData(sce_pan) %>%
     mutate(
         cellType.RNAscope = ordered(cellType.RNAscope, levels = c("Excit", "Inhib", "Oligo", "Other")),
         sum_adj = sum / sd(sum)
-    ) ## adjust for beta calc
+    ) %>%
+    mutate(label = "snRNA-seq")  ## adjust for beta calc
 
 sum_data_main <- sum_data %>%
     filter(cellType.RNAscope != "Other") %>%
@@ -97,14 +98,22 @@ sum_data_main <- sum_data %>%
         sum_adj = sum / sd(sum)
     )
 
+sd(sum_data$sum)
+# [1] 15560.76
+
 sn_fit_main <- lm(sum ~ cellType.RNAscope, data = sum_data_main)
 slope_anno(sn_fit_main, 2)
 # "-21844.1 (-22172.5,-21515.7)"
 
 ## use sum adj
 sn_fit_main_adj <- lm(sum_adj ~ cellType.RNAscope, data = sum_data_main)
-(sn_fit_main_adj_anno <- slope_anno(sn_fit_main_adj, 2))
+slope_anno(sn_fit_main_adj, 2)
 # "-1.33 (-1.35,-1.31)"
+
+sn_beta_summary <- tibble(RI_gene = "snRNA-seq sum",
+                     beta = slope_anno(sn_fit_main, 2),
+                     sd = sd(sum_data$sum),
+                     beta_adj = slope_anno(sn_fit_main_adj, 2))
 
 ## sum over cell type boxplot
 sn_sum_boxplot <- sum_data %>%
@@ -115,18 +124,23 @@ sn_sum_boxplot <- sum_data %>%
     labs(x = "Cell Type") +
     theme(text = element_text(size = 15))
 
-ggsave(sn_sum_boxplot, filename = here("plots", "HK_gene", "halo", "sn_sum_boxplot.png"))
+ggsave(sn_sum_boxplot, filename = here(plot_dir, "explore", "sn_sum_boxplot.png"))
 ## Supp figure 5
-ggsave(sn_sum_boxplot + theme(legend.position = "None", axis.text.x = element_text(angle = 90)),
-    filename = here("plots", "HK_gene", "supp_figs", "S5a_sn_sum_boxplot.pdf"), height = 6, width = 3
+ggsave(sn_sum_boxplot + 
+           theme(legend.position = "None", axis.text.x = element_text(angle = 90)) +
+           facet_wrap(~label),
+    filename = here(plot_dir, "supp_pdf", "S5a_sn_sum_boxplot.pdf"), height = 6, width = 3
 )
 
 ## sum over cell type boxplot
 sn_sum_boxplot_main <- sum_data %>%
     filter(cellType.RNAscope != "Other") %>%
     ggplot(aes(x = cellType.RNAscope, y = sum, fill = cellType.RNAscope)) +
-    geom_boxplot() +
+    # geom_boxplot() +
+    geom_jitter(size = 0.5, alpha = 0.2, color = "grey")+
+    geom_boxplot(outlier.shape = NA)+
     scale_fill_manual(values = halo_colors2) +
+    facet_wrap(~label) +
     theme_bw() +
     labs(x = "Cell Type") +
     theme(
@@ -135,19 +149,11 @@ sn_sum_boxplot_main <- sum_data %>%
         axis.text.x = element_text(angle = 90)
     )
 
-## Main figure 5
+## Main figure 6
 ggsave(sn_sum_boxplot_main,
-    filename = here("plots", "HK_gene", "main_figs", "fig5_sn_sum_boxplot.pdf"), height = 6, width = 3
+    filename = here(plot_dir, "main_pdf", "fig6_sn_sum_boxplot.pdf"), height = 6, width = 3
 )
 
-ggsave(sn_sum_boxplot_main +
-    annotate(
-        geom = "text", label = slope_anno(sn_fit_main),
-        x = Inf, y = Inf,
-        hjust = 1, vjust = 1.5
-    ),
-filename = here("plots", "HK_gene", "main_figs", "fig5_sn_sum_boxplot.png")
-)
 
 #### Load Halo Data ####
 load(here("processed-data", "02_analyze_halo", "halo_all.rda"), verbose = TRUE)
@@ -171,18 +177,17 @@ cell_type_wide <- halo_all %>%
 
 write_csv(rna_scope_summary, file = here("processed-data", "02_analyze_halo", "RNAscope_summary.csv"))
 
-## mean number nuclei
-mean(rna_scope_summary$`Number cells after filtering`)
-# [1] 91743.78
-
-# ## Filter for rest of the plots
-# halo_all <- halo_all %>%
-#   mutate(cell_type_simple = ifelse(cell_type == "Multi", "Other", cell_type))
-
-# halo_all %>% dplyr::count(cell_type_simple)
-
+## Examine number nuclei
 nrow(halo_all)
 # [1] 1171800
+
+summary(rna_scope_summary$`Number cells`)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 80796   94528  101475   97691  102654  109130 
+
+summary(rna_scope_summary$`Number cells after filtering`)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 68202   88908   92794   91744   99864  106123
 
 #### Filter Bad Regions ####
 halo_all <- halo_all %>% filter(!region_filter)
@@ -221,19 +226,25 @@ prop_RI_hit <- halo_all %>%
     left_join(n_cells) %>%
     mutate(prop_RI = n_RI / n)
 
-prop_RI_summary <- prop_RI_hit %>%
+mean_n_puncta <- halo_all %>%
+    group_by(RI_gene) %>%
+    summarize(mean_n_puncta = mean(n_puncta))
+
+(prop_RI_summary <- prop_RI_hit %>%
     group_by(RI_gene) %>%
     summarize(
         mean_prop_RI = mean(prop_RI),
         sd_prop_RI = sd(prop_RI)
-    )
+    ) %>% left_join(mean_n_puncta))
 
-# # A tibble: 4 × 3
-# RI_gene mean_prop_RI sd_prop_RI
-# 1 AKT3           0.952    0.0101
-# 2 ARID1B         0.917    0.00897
-# 3 MALAT1         0.925    0.0122
-# 4 POLR2A         0.876    0.0186
+
+# A tibble: 4 × 4
+# RI_gene mean_prop_RI sd_prop_RI mean_n_puncta
+# <chr>          <dbl>      <dbl>         <dbl>
+# 1 AKT3           0.881    0.00957          4.09
+# 2 ARID1B         0.859    0.00533          3.08
+# 3 MALAT1         0.975    0.00293          2.07
+# 4 POLR2A         0.785    0.0312           2.75
 
 composition_bar_RI_hit <- prop_RI_summary %>%
     select(RI_gene, mean_prop_TRUE = mean_prop_RI) %>%
@@ -243,7 +254,7 @@ composition_bar_RI_hit <- prop_RI_summary %>%
     theme_bw() +
     labs(fill = "RI Gene Hit")
 
-ggsave(composition_bar_RI_hit, filename = here("plots", "HK_gene", "halo", "composition_RI_gene.png"))
+ggsave(composition_bar_RI_hit, filename = here(plot_dir, "explore", "composition_RI_gene.png"))
 
 
 #### Cell Type Composition ####
@@ -266,7 +277,7 @@ composition_bar_sample <- plot_composition_bar(cell_prop,
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave(composition_bar_sample, filename = here("plots", "HK_gene", "halo", "composition_sample.png"), width = 9)
+ggsave(composition_bar_sample, filename = here(plot_dir, "explore", "composition_sample.png"), width = 9)
 
 cell_prop2 <- rbind(cell_prop, sn_cell_prop) ## compare with snRNA-seq
 cell_prop2$cell_type <- factor(cell_prop2$cell_type, levels = names(halo_colors))
@@ -279,7 +290,7 @@ composition_bar_gene <- plot_composition_bar(cell_prop2,
     scale_fill_manual(values = halo_colors) +
     theme_bw()
 
-ggsave(composition_bar_gene, filename = here("plots", "HK_gene", "halo", "composition_gene.png"))
+ggsave(composition_bar_gene, filename = here(plot_dir, "explore", "composition_gene.png"))
 
 ## grant version
 cell_prop_g <- halo_all %>%
@@ -306,7 +317,7 @@ composition_bar_sample_g <- plot_composition_bar(cell_prop_g,
     theme(axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size = 17)) +
     labs(y = "Proportion")
 
-ggsave(composition_bar_sample_g, filename = here("plots", "HK_gene", "halo", "composition_sample_grant.png"), width = 5, height = 7)
+ggsave(composition_bar_sample_g, filename = here(plot_dir, "explore", "composition_sample_grant.png"), width = 5, height = 7)
 
 #### Puncta By Cell Type ####
 halo_all$cell_type <- ordered(halo_all$cell_type, levels = c("Excit", "Inhib", "Multi", "Oligo", "Other"))
@@ -314,17 +325,32 @@ halo_all$cell_type <- ordered(halo_all$cell_type, levels = c("Excit", "Inhib", "
 ## box plots
 n_puncta_boxplot <- halo_all %>%
     ggplot(aes(x = cell_type, fill = cell_type, y = n_puncta)) +
-    geom_boxplot() +
+    geom_jitter(size = 0.5, alpha = 0.1, color = "grey")+
+    geom_boxplot(outlier.shape = NA) +
     facet_wrap(~RI_gene, scales = "free_x", nrow = 1) +
     scale_fill_manual(values = halo_colors) +
     theme_bw() +
     labs(x = "Cell Type", y = "Number Puncta") +
     theme(text = element_text(size = 15), legend.position = "none", axis.text.x = element_text(angle = 90))
 
-ggsave(n_puncta_boxplot, filename = here("plots", "HK_gene", "halo", "puncta_boxplot.png"), width = 11)
+ggsave(n_puncta_boxplot, filename = here(plot_dir, "explore", "puncta_boxplot.png"), width = 11)
+
+n_puncta_violin <- halo_all %>%
+    ggplot(aes(x = cell_type, fill = cell_type, y = n_puncta)) +
+    # geom_jitter(size = 0.5, alpha = 0.1, color = "grey")+
+    geom_violin() +
+    facet_wrap(~RI_gene, scales = "free_x", nrow = 1) +
+    scale_fill_manual(values = halo_colors) +
+    theme_bw() +
+    labs(x = "Cell Type", y = "Number Puncta") +
+    theme(text = element_text(size = 15), legend.position = "none", axis.text.x = element_text(angle = 90))
+
+ggsave(n_puncta_violin, filename = here(plot_dir, "explore", "puncta_violin.png"), width = 11)
+
+
 
 ## Supp fig 5 version
-ggsave(n_puncta_boxplot, filename = here("plots", "HK_gene", "supp_figs", "S5b_puncta_boxplot.pdf"), height = 6)
+ggsave(n_puncta_boxplot, filename = here(plot_dir, "supp_pdf", "S5b_puncta_boxplot.pdf"), height = 6)
 
 
 ## Main slopes
@@ -342,56 +368,60 @@ puncta_beta <- halo_all %>%
         round(conf.high, 2), ")"
     ))
 
-puncta_beta %>%
-    select(RI_gene, beta)
-# RI_gene beta
-# <chr>   <chr>
-#   1 AKT3    -11.87 (-11.94,-11.81)
-# 2 ARID1B  -5.32 (-5.36,-5.27)
-# 3 MALAT1  -0.98 (-0.99,-0.96)
-# 4 POLR2A  -8.45 (-8.49,-8.41)
+(beta_summary <- puncta_beta %>%
+    select(RI_gene, beta))
+# RI_gene beta               
+# <chr>   <chr>              
+# 1 AKT3    -5.52 (-5.55,-5.49)
+# 2 ARID1B  -2.63 (-2.65,-2.6) 
+# 3 MALAT1  -1.22 (-1.24,-1.21)
+# 4 POLR2A  -3.49 (-3.51,-3.47)
 
-## adjust for sd
-puncta_beta_adj <- halo_all %>%
-    filter(cell_type %in% c("Excit", "Inhib", "Oligo")) %>%
-    mutate(
-        cell_type = droplevels(cell_type),
-        puncta_adj = n_puncta / sd(n_puncta)
-    ) %>%
+puncta_sd <- halo_all %>%
     group_by(RI_gene) %>%
-    do(fit = tidy(lm(puncta_adj ~ cell_type, data = .), conf.int = TRUE)) %>%
-    unnest(fit) %>%
-    filter(term == "cell_type.L") %>%
-    mutate(beta = paste0(
-        round(estimate, 2), " (",
-        round(conf.low, 2), ",",
-        round(conf.high, 2), ")"
-    ))
-
-puncta_beta_adj %>%
-    select(RI_gene, beta) %>%
-    add_row(RI_gene = "snRNA-seq sum", beta = sn_fit_main_adj_anno)
-# RI_gene       beta
-# <chr>         <chr>
-#   1 AKT3          -1.38 (-1.39,-1.37)
-# 2 ARID1B        -0.62 (-0.62,-0.61)
-# 3 MALAT1        -0.11 (-0.12,-0.11)
-# 4 POLR2A        -0.98 (-0.99,-0.98)
-# 5 snRNA-seq sum -1.33 (-1.35,-1.31)
-
-## Main fig 5
-n_puncta_boxplot <- halo_all %>%
     filter(cell_type %in% c("Excit", "Inhib", "Oligo")) %>%
+    summarise(sd = sd(n_puncta))
+
+## adjust for sd, summarize
+beta_summary <- puncta_beta %>%
+    left_join(puncta_sd) %>%
+    mutate(estimate_adj = estimate/sd,
+           conf.low_adj = conf.low/sd,
+           conf.high_adj = conf.high/sd,
+           beta_adj = paste0(
+               round(estimate_adj, 2), " (",
+               round(conf.low_adj, 2), ",",
+               round(conf.high_adj, 2), ")"
+           )) %>%
+    select(RI_gene, beta, sd, beta_adj) %>%
+    rbind(sn_beta_summary)
+
+# RI_gene       beta                                  sd beta_adj           
+# <chr>         <chr>                              <dbl> <chr>              
+# 1 AKT3          -5.52 (-5.55,-5.49)                 5.18 -1.07 (-1.07,-1.06)
+# 2 ARID1B        -2.63 (-2.65,-2.6)                  3.42 -0.77 (-0.77,-0.76)
+# 3 MALAT1        -1.22 (-1.24,-1.21)                 1.53 -0.8 (-0.81,-0.79) 
+# 4 POLR2A        -3.49 (-3.51,-3.47)                 3.34 -1.05 (-1.05,-1.04)
+# 5 snRNA-seq sum -21844.07 (-22172.45,-21515.68) 15561.   -1.33 (-1.35,-1.31)          
+
+## Main fig 6
+n_puncta_boxplot <- halo_all %>%
+    filter(cell_type %in% c("Excit", "Inhib", "Oligo"),
+           RI_gene != "MALAT1") %>%
     ggplot(aes(x = cell_type, fill = cell_type, y = n_puncta)) +
-    geom_boxplot() +
+    geom_jitter(size = 0.5, alpha = 0.1, color = "grey", height = .2)+
+    # geom_boxplot()+
+    geom_boxplot(outlier.shape = NA) +
     facet_wrap(~RI_gene, scales = "free_x", nrow = 1) +
     scale_fill_manual(values = halo_colors2) +
     theme_bw() +
     labs(x = "Cell Type", y = "Number Puncta") +
-    theme(text = element_text(size = 15), legend.position = "none", axis.text.x = element_text(angle = 90))
+    theme(text = element_text(size = 15), 
+          legend.position = "none", 
+          axis.text.x = element_text(angle = 90),
+          strip.text.x = element_text(face="italic"))
 
-## Supp fig 5 version
-ggsave(n_puncta_boxplot, filename = here("plots", "HK_gene", "main_figs", "fig5_puncta_boxplot.pdf"), height = 6)
+ggsave(n_puncta_boxplot, filename = here(plot_dir, "main_pdf", "fig6_puncta_boxplot.pdf"), height = 6)
 
 ## grant version
 n_puncta_boxplot <- halo_all %>%
@@ -403,7 +433,7 @@ n_puncta_boxplot <- halo_all %>%
     labs(x = "Cell Type", y = "Number Puncta") +
     theme(text = element_text(size = 20), legend.position = "none")
 
-ggsave(n_puncta_boxplot, filename = here("plots", "HK_gene", "halo", "puncta_boxplot_grant.png"))
+ggsave(n_puncta_boxplot, filename = here(plot_dir, "explore", "puncta_boxplot_grant.png"))
 
 #### Cell Size by Cell Type ####
 nuc_area_boxplot <- halo_all %>%
@@ -417,7 +447,7 @@ nuc_area_boxplot <- halo_all %>%
     theme_bw() +
     theme(text = element_text(size = 15), legend.position = "none")
 
-ggsave(nuc_area_boxplot, filename = here("plots", "HK_gene", "halo", "nucleus_area_boxplot.png"), width = 9)
+ggsave(nuc_area_boxplot, filename = here(plot_dir, "explore", "nucleus_area_boxplot.png"), width = 9)
 
 ## grant version
 nuc_area_boxplot <- halo_all %>%
@@ -429,7 +459,7 @@ nuc_area_boxplot <- halo_all %>%
     theme_bw() +
     theme(text = element_text(size = 20), legend.position = "none")
 
-ggsave(nuc_area_boxplot, filename = here("plots", "HK_gene", "halo", "nucleus_area_boxplot_grant.png"))
+ggsave(nuc_area_boxplot, filename = here(plot_dir, "explore", "nucleus_area_boxplot_grant.png"))
 
 ## Area vs. puncta ##
 
@@ -462,12 +492,12 @@ n_puncta_size_scatter <- halo_all %>%
     geom_point(aes(color = cell_type), size = 0.2, alpha = 0.2) +
     geom_smooth(method = "lm", color = "black") +
     scale_color_manual(values = halo_colors) +
-    facet_grid(RI_gene ~ cell_type, scales = "free_y") +
+    facet_grid(RI_gene ~ cell_type) +
     labs(x = "Nucleus Area µm", y = "Number of Puncta") +
     theme_bw() +
     theme(text = element_text(size = 15), legend.position = "none")
 
-ggsave(n_puncta_size_scatter, filename = here("plots", "HK_gene", "halo", "puncta_size_scatter.png"), width = 9)
+ggsave(n_puncta_size_scatter, filename = here(plot_dir, "explore", "puncta_size_scatter.png"), width = 9)
 
 #### Spatial ####
 hex_n_cells <- halo_all %>%
@@ -479,7 +509,7 @@ hex_n_cells <- halo_all %>%
     coord_equal() +
     scale_y_reverse()
 
-ggsave(hex_n_cells, filename = here("plots", "HK_gene", "halo", "hex_n_cells.png"))
+ggsave(hex_n_cells, filename = here(plot_dir, "explore", "hex_n_cells.png"))
 
 hex_mean_area <- halo_all %>%
     filter(RI_gene != "POLR2A") %>%
@@ -491,9 +521,7 @@ hex_mean_area <- halo_all %>%
     scale_y_reverse() +
     theme(legend.position = "bottom")
 
-ggsave(hex_mean_area, filename = here("plots", "HK_gene", "halo", "hex_mean_area.png"))
-ggsave(hex_mean_area, filename = here("plots", "HK_gene", "supp_figs", "S4_hex_mean_area.pdf"))
-
+ggsave(hex_mean_area, filename = here(plot_dir, "explore", "hex_mean_area.png"))
 
 #### Check out RI Expression by XY ####
 hex_ri <- halo_all %>%
@@ -505,7 +533,7 @@ hex_ri <- halo_all %>%
     coord_equal() +
     scale_y_reverse()
 
-ggsave(hex_ri, filename = here("plots", "HK_gene", "halo", "hex_RI.png"), width = 7)
+ggsave(hex_ri, filename = here(plot_dir, "explore", "hex_RI.png"), width = 7)
 
 my_breaks <- c(2, 10, 50, 250, 1250, 6000)
 
@@ -520,7 +548,7 @@ hex_ri_sum <- halo_all %>%
     coord_equal() +
     scale_y_reverse()
 
-ggsave(hex_ri_sum, filename = here("plots", "HK_gene", "halo", "hex_RI_sumlog.png"), width = 9)
+ggsave(hex_ri_sum, filename = here(plot_dir, "explore", "hex_RI_sumlog.png"), width = 9)
 
 hex_ri_sum2 <- halo_all %>%
     ggplot(aes(x = XMax, y = YMax, z = n_puncta)) +
@@ -531,7 +559,7 @@ hex_ri_sum2 <- halo_all %>%
     scale_y_reverse() +
     theme(legend.position = "bottom")
 
-ggsave(hex_ri_sum2, filename = here("plots", "HK_gene", "halo", "hex_RI_sum.png"), width = 9)
+ggsave(hex_ri_sum2, filename = here(plot_dir, "explore", "hex_RI_sum.png"), width = 9)
 
 
 hex_ri_mean <- halo_all %>%
@@ -541,10 +569,13 @@ hex_ri_mean <- halo_all %>%
     facet_wrap(~RI_gene, nrow = 1) +
     coord_equal() +
     scale_y_reverse() +
-    theme(legend.position = "bottom")
+    theme(legend.position = "bottom") +
+    theme_bw()+
+    theme(text = element_text(size = 15), 
+          legend.position = "bottom")
 
-ggsave(hex_ri_mean, filename = here("plots", "HK_gene", "halo", "hex_RI_mean.png"), width = 9)
-ggsave(hex_ri_mean, filename = here("plots", "HK_gene", "supp_figs", "S4_hex_RI_mean.pdf"))
+ggsave(hex_ri_mean, filename = here(plot_dir, "explore", "hex_mean_puncta.png"), width = 10)
+ggsave(hex_ri_mean, filename = here(plot_dir, "supp_pdf", "S5_hex_mean_puncta.pdf"), width = 10)
 
 
 #### Check out Cell Types by XY ####
@@ -560,7 +591,7 @@ walk(levels(halo_all$cell_type), function(ct) {
         scale_y_reverse() +
         labs(title = ct)
 
-    ggsave(ct_hex, filename = here("plots", "HK_gene", "halo", paste0("hex_ct_", ct, ".png")))
+    ggsave(ct_hex, filename = here(plot_dir, "explore", paste0("hex_ct_", ct, ".png")))
 })
 
 #### Figure 4 AKT3 Rep#1 plot ####
@@ -586,8 +617,8 @@ halo_a1_nucleus <- halo_a1 %>%
     theme_bw() +
     blank_axis
 
-# ggsave(halo_a1_nucleus, filename = here("plots","HK_gene","main_figs","fig4_halo_nucleus.png"),width = 4, height = 2.5)
-ggsave(halo_a1_nucleus, filename = here("plots", "HK_gene", "main_figs", "fig4_halo_nucleus.pdf"), width = 4, height = 2.5)
+# ggsave(halo_a1_nucleus, filename = here("plots","HK_gene","main_figs","fig5_halo_nucleus.png"),width = 4, height = 2.5)
+ggsave(halo_a1_nucleus, filename = here(plot_dir, "main_pdf", "fig5_halo_nucleus.pdf"), width = 4, height = 2.5)
 
 halo_a1_n_puncta <- halo_a1 %>%
     ggplot(aes(x = XMax, y = YMax, z = n_puncta)) +
@@ -598,8 +629,8 @@ halo_a1_n_puncta <- halo_a1 %>%
     theme_bw() +
     blank_axis
 
-# ggsave(halo_a1_n_puncta, filename = here("plots","HK_gene","main_figs","fig4_halo_puncta.png"),width = 4, height = 2.5)
-ggsave(halo_a1_n_puncta, filename = here("plots", "HK_gene", "main_figs", "fig4_halo_puncta.pdf"), width = 4, height = 2.5)
+# ggsave(halo_a1_n_puncta, filename = here("plots","HK_gene","main_figs","fig5_halo_puncta.png"),width = 4, height = 2.5)
+ggsave(halo_a1_n_puncta, filename = here(plot_dir, "main_pdf", "fig5_halo_puncta.pdf"), width = 4, height = 2.5)
 
 
 halo_a1_cell_type <- halo_a1 %>%
@@ -613,5 +644,5 @@ halo_a1_cell_type <- halo_a1 %>%
     theme_bw() +
     blank_axis
 
-# ggsave(halo_a1_cell_type, filename = here("plots","HK_gene","main_figs","fig4_halo_cell_types.png"),width = 8, height = 3)
-ggsave(halo_a1_cell_type, filename = here("plots", "HK_gene", "main_figs", "fig4_halo_cell_types.pdf"), width = 8, height = 3)
+# ggsave(halo_a1_cell_type, filename = here("plots","HK_gene","main_figs","fig5_halo_cell_types.png"),width = 8, height = 3)
+ggsave(halo_a1_cell_type, filename = here(plot_dir, "main_pdf", "fig5_halo_cell_types.pdf"), width = 8, height = 3)
