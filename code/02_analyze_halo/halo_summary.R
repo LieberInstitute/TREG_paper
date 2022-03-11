@@ -121,7 +121,7 @@ sn_sum_boxplot <- sum_data %>%
     geom_boxplot() +
     scale_fill_manual(values = halo_colors) +
     theme_bw() +
-    labs(x = "Cell Type") +
+    labs(x = "Cell Type", y = "Total RNA Expression") +
     theme(text = element_text(size = 15))
 
 ggsave(sn_sum_boxplot, filename = here(plot_dir, "explore", "sn_sum_boxplot.png"))
@@ -136,13 +136,13 @@ ggsave(sn_sum_boxplot +
 sn_sum_boxplot_main <- sum_data %>%
     filter(cellType.RNAscope != "Other") %>%
     ggplot(aes(x = cellType.RNAscope, y = sum, fill = cellType.RNAscope)) +
-    # geom_boxplot() +
-    geom_jitter(size = 0.5, alpha = 0.2, color = "grey")+
-    geom_boxplot(outlier.shape = NA)+
+    geom_boxplot() +
+    # geom_jitter(size = 0.5, alpha = 0.2, color = "grey")+
+    # geom_boxplot(outlier.shape = NA)+
     scale_fill_manual(values = halo_colors2) +
     facet_wrap(~label) +
     theme_bw() +
-    labs(x = "Cell Type") +
+    labs(x = "Cell Type", y = "Total RNA Expression") +
     theme(
         text = element_text(size = 15),
         legend.position = "None",
@@ -402,16 +402,24 @@ beta_summary <- puncta_beta %>%
 # 2 ARID1B        -2.63 (-2.65,-2.6)                  3.42 -0.77 (-0.77,-0.76)
 # 3 MALAT1        -1.22 (-1.24,-1.21)                 1.53 -0.8 (-0.81,-0.79) 
 # 4 POLR2A        -3.49 (-3.51,-3.47)                 3.34 -1.05 (-1.05,-1.04)
-# 5 snRNA-seq sum -21844.07 (-22172.45,-21515.68) 15561.   -1.33 (-1.35,-1.31)          
+# 5 snRNA-seq sum -21844.07 (-22172.45,-21515.68) 15561.   -1.33 (-1.35,-1.31) 
+
+## Add puncta data to beta table for Table 1
+
+puncta_summary <- prop_RI_summary %>%
+    right_join(beta_summary) %>%
+    select(-sd_prop_RI) 
+
+write_csv(puncta_summary, file = here("processed-data", "02_analyze_halo", "puncta_summary.csv"))
 
 ## Main fig 6
 n_puncta_boxplot <- halo_all %>%
     filter(cell_type %in% c("Excit", "Inhib", "Oligo"),
            RI_gene != "MALAT1") %>%
     ggplot(aes(x = cell_type, fill = cell_type, y = n_puncta)) +
-    geom_jitter(size = 0.5, alpha = 0.1, color = "grey", height = .2)+
-    # geom_boxplot()+
-    geom_boxplot(outlier.shape = NA) +
+    geom_boxplot()+
+    # geom_jitter(size = 0.5, alpha = 0.1, color = "grey", height = .2)+
+    # geom_boxplot(outlier.shape = NA) +
     facet_wrap(~RI_gene, scales = "free_x", nrow = 1) +
     scale_fill_manual(values = halo_colors2) +
     theme_bw() +
@@ -642,7 +650,8 @@ halo_a1_cell_type <- halo_a1 %>%
     coord_equal() +
     scale_y_reverse() +
     theme_bw() +
-    blank_axis
+    blank_axis +
+    theme(legend.position = "bottom")
 
 # ggsave(halo_a1_cell_type, filename = here("plots","HK_gene","main_figs","fig5_halo_cell_types.png"),width = 8, height = 3)
 ggsave(halo_a1_cell_type, filename = here(plot_dir, "main_pdf", "fig5_halo_cell_types.pdf"), width = 8, height = 3)
