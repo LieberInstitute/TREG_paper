@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/462890831.svg)](https://zenodo.org/badge/latestdoi/462890831)
+
 # TREG paper
 
 ## Overview
