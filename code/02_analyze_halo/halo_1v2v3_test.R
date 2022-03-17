@@ -1,5 +1,5 @@
 library(tidyverse)
-library(jaffelab)
+# library(jaffelab)
 library(here)
 
 source("halo_tools.R")
@@ -16,29 +16,43 @@ colnames(v1) <- gsub('_$', '', gsub('(\\.)+', '_', colnames(v1)))
 colnames(v2) <- gsub('_$', '', gsub('(\\.)+', '_', colnames(v2)))
 colnames(v3) <- gsub('_$', '', gsub('(\\.)+', '_', colnames(v3)))
 
-# Cytoplasm cols are unique to 
-colnames(v2)[!colnames(v2) %in% colnames(v3)]
-# [1] "MBP_Opal_520_Positive_Cytoplasm"      "MBP_Opal_520_Cytoplasm_Intensity"     "SLC17A7_Opal_690_Positive_Cytoplasm" 
-# [4] "SLC17A7_Opal_690_Cytoplasm_Intensity" "GAD1_Opal_620_Positive_Cytoplasm"     "GAD1_Opal_620_Cytoplasm_Intensity"   
-# [7] "DAPI_DAPI_Positive_Cytoplasm"         "DAPI_DAPI_Cytoplasm_Intensity"        "Cytoplasm_Area_µm"  
+v1 <- as_tibble(v1)
+v2 <- as_tibble(v2)
+v3 <- as_tibble(v3)
 
-# All V2 colanmes are in V3
-colnames(v3)[!colnames(v3) %in% colnames(v2)]
-# character(0)
-
+# Compare tables
 ## same n rows between v1 & 2
 dim(v1)
 # [1] 304505     42
 dim(v2)
 # [1] 304505     45
-
 ## different number of rows in v3
 dim(v3)
 # [1] 285330     36
 
-v1 <- as_tibble(v1)
-v2 <- as_tibble(v2)
-v3 <- as_tibble(v3)
+# Cytoplasm cols are unique to v2
+colnames(v2)[!colnames(v2) %in% colnames(v1)]
+
+v2_same_cols <- v2 %>% select(-MBP, -SLC17A7, -GAD1)
+all_equal(head(v1, 150) %>% select(-Algorithm_Name), 
+          head(v2_same_cols, 150) %>% select(-Algorithm_Name))
+# [1] "- Rows in x but not in y: 126, 127, 128, 129, 130, 131, 132, 133, 134, 135,
+# things get diff after 126
+
+v1 %>% count(Algorithm_Name)
+# all 20211203_ARID1B_Entire_5%
+v2 %>% count(Algorithm_Name)
+# all 20220218_ARID1B_Entire_5%_Cyto_Nuc_Copynumb
+
+colnames(v2)[!colnames(v2) %in% colnames(v3)]
+# [1] "MBP_Opal_520_Positive_Cytoplasm"      "MBP_Opal_520_Cytoplasm_Intensity"     "SLC17A7_Opal_690_Positive_Cytoplasm" 
+# [4] "SLC17A7_Opal_690_Cytoplasm_Intensity" "GAD1_Opal_620_Positive_Cytoplasm"     "GAD1_Opal_620_Cytoplasm_Intensity"   
+# [7] "DAPI_DAPI_Positive_Cytoplasm"         "DAPI_DAPI_Cytoplasm_Intensity"        "Cytoplasm_Area_µm"  
+
+# All V3 colnames are in V2
+colnames(v3)[!colnames(v3) %in% colnames(v2)]
+# character(0)
+
 
 ## can we merge these?
 v1 %>% count(Analysis_Region)
@@ -60,15 +74,6 @@ v3 %>% count(Analysis_Region)
 # 1 ARID1B_Rep#1    101513
 # 2 ARID1B_Rep#2     94528
 # 3 ARID1B_Rep#3     89289
-
-test_object12 <- v1 %>%
-  select(2:8) %>%
-  # head(100) %>% 
-  rename_with(.fn = ~ paste0(.x, "_v2"), .cols = !c(Object_Id, Analysis_Region)) %>%
-  left_join(v2 %>% select(2:8)) %>%
-  mutate(d_min = XMin_v2 - XMin,
-         d_max = XMax_v2 - XMax,
-         q_min = XMin_v2/XMin) 
 
  test_object23 <- v2 %>%
   select(2:8) %>%
@@ -177,4 +182,44 @@ area_scatter <- halo_v2 %>%
 
 ggsave(area_scatter, filename = here(plot_dir, "explore", "area_scatter_ARID1B_v2.png"))
 
+## compare 1 & 2
+test_object12 <- v1 %>%
+  select(-Image_Location) %>%
+  rename_with(.fn = ~ paste0(.x, "_v1"), .cols = !c(Object_Id, Analysis_Region)) %>%
+  left_join(v2 %>% select(-Image_Location) %>% 
+              rename_with(.fn = ~ paste0(.x, "_v2"), .cols = !c(Object_Id, Analysis_Region))) 
+
+colnames(test_object12)
+
+v1v2_scatter <- test_object12 %>%
+  ggplot(aes(x = XMin_v1, y = XMin_v2)) +
+  geom_point(alpha = 0.2) + 
+  theme_bw()
+
+ggsave(v1v2_scatter, filename = here(plot_dir, "explore", "scatter_ARID1B_1v2.png"))
+
+test_x12 <- v1 %>%
+  select(-Image_Location) %>%
+  rename_with(.fn = ~ paste0(.x, "_v1"), .cols = !c(XMin,XMax,YMin,YMax, Analysis_Region)) %>%
+  left_join(v2 %>% select(-Image_Location) %>% 
+              rename_with(.fn = ~ paste0(.x, "_v2"), .cols = !c(XMin,XMax,YMin,YMax, Analysis_Region))) 
+
+test_x12 %>%
+  count(Object_Id_v1 == Object_Id_v2) 
+# `Object_Id_v1 == Object_Id_v2`      n
+# <lgl>                           <int>
+#   1 FALSE                          169813
+# 2 TRUE                           135090
+
+test_x12 %>%
+  mutate(diff_puncta = ARID1B_Opal_570_Copies_v1 - ARID1B_Opal_570_Copies_v2) %>%
+  count(diff_puncta)
+
+v1v2_scatter <- test_x12 %>%
+  ggplot(aes(x = ARID1B_Opal_570_Copies_v1, y = ARID1B_Opal_570_Copies_v1 - ARID1B_Opal_570_Copies_v2)) +
+  geom_point(alpha = 0.2) + 
+  theme_bw() +
+  labs(title = "ARID1B Puncta Analysis 1v2")
+
+ggsave(v1v2_scatter, filename = here(plot_dir, "explore", "puncta_scatter_ARID1B_1v2.png"))
 
