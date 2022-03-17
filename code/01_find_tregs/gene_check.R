@@ -26,7 +26,140 @@ tt2 <- tt %>%
 gene_metrics2 <- gene_metrics %>%
     left_join(tt2)
 
-## Marker genes from TRan Maynard et al.
+## export version
+## Exclude marker annotation for now
+head(gene_metrics2)
+#       Symbol      ensembl_id top50 max_PropZero PropZero_filter rank_invar Gene Type          t
+# 1 AL627309.1 ENSG00000238009  TRUE      1.00000           FALSE         NA      <NA>  51.188405
+# 2 AC114498.1 ENSG00000235146 FALSE           NA           FALSE         NA      <NA>   9.844346
+# 3 AL669831.5 ENSG00000237491  TRUE      0.96875           FALSE         NA      <NA> 106.687296
+# 4  LINC00115 ENSG00000225880 FALSE           NA           FALSE         NA      <NA>  18.115699
+# 5     FAM41C ENSG00000230368 FALSE           NA           FALSE         NA      <NA>   8.931643
+# 6 AL645608.7 ENSG00000272438 FALSE           NA           FALSE         NA      <NA>   6.048259
+write.csv(gene_metrics2, here("processed-data", "01_find_tregs", "supp_tables", "gene_metrics2.csv"))
+
+
+#### t-stat plots ####
+gene_metrics3 <- gene_metrics2 %>%
+    replace_na(list(`Gene Type` = "None")) %>%
+    mutate(
+        gene_anno = case_when(
+            !top50 ~ "Fail 50% Exp.",
+            !PropZero_filter ~ "Fail Prop. Zero",
+            TRUE ~ "Evaluated RI"
+        ),
+        label1 = Symbol %in% c("ARID1B", "AKT3", "MALAT1", "POLR2A"),
+        label2 = `Gene Type` != "None",
+        alpha = `Gene Type` != "None",
+        `Gene Type` = factor(`Gene Type`, levels = c('TREG Canidate', 'Classic HK', "Data Driven HK", "None"))
+    )
+
+gene_metrics3 %>% dplyr::count(gene_anno, `Gene Type`)
+#         gene_anno      Gene Type     n
+# 1    Evaluated RI  TREG Canidate     3
+# 2    Evaluated RI           None   874
+# 3   Fail 50% Exp.     Classic HK     2
+# 4   Fail 50% Exp. Data Driven HK     1
+# 5   Fail 50% Exp.           None 11516
+# 6 Fail Prop. Zero     Classic HK    10
+# 7 Fail Prop. Zero Data Driven HK     7
+# 8 Fail Prop. Zero           None 10625
+
+## t-stat plots
+plot_dir <- "plots/01_find_tregs"
+gene_type_colors <- create_cell_colors(levels(gene_metrics3$`Gene Type`), pallet = "gg")
+gene_type_colors["None"] <- "grey"
+
+invar_t_scatter <- gene_metrics3 %>%
+    filter(gene_anno == "Evaluated RI") %>%
+    ggplot(aes(x = rank_invar, y = t)) +
+    geom_point(alpha = 0.2, color = "grey") +
+    geom_point(
+        data = filter(gene_metrics3, label2, gene_anno == "Evaluated RI"),
+        aes(color = `Gene Type`)
+    ) +
+    geom_point(data = filter(gene_metrics3, label1, gene_anno == "Evaluated RI"), shape = 21, color = "black") +
+    geom_text_repel(aes(label = ifelse(label2, paste0("italic('", Symbol, "')"), NA)),
+        size = 3, parse = TRUE
+    ) +
+    scale_color_manual(values = gene_type_colors, drop = FALSE) +
+    ylim(0, 400) +
+    theme_bw() +
+    facet_wrap(~gene_anno) +
+    labs(x = "Rank Invariance", y = "Total RNA t-statistic") +
+    theme(text = element_text(size = 15))
+
+ggsave(invar_t_scatter, filename = here(plot_dir, "explore", "rank_invar_t_scatter.png"), width = 6)
+ggsave(invar_t_scatter, filename = here(plot_dir, "supp_pdf", "rank_invar_t_scatter.pdf"), width = 6)
+
+## Denisity/jitter plot
+pos <- position_jitter(width = 0.3, seed = 2)
+invar_t_density <- gene_metrics3 %>%
+    filter(gene_anno != "Evaluated RI") %>%
+    ggplot(aes(x = `Gene Type`, y = t)) +
+    geom_point(aes(color = `Gene Type`, alpha = alpha), position = pos) +
+    # geom_point(aes(alpha = alpha, color = `Gene Type`), position = pos) +
+    # geom_point(data = filter(gene_metrics3, label2, gene_anno != "Evaluated RI"),
+    #            aes(fill= `Gene Type`), shape=21, color = "black", position = pos)+
+    geom_text_repel(aes(label = ifelse(label2, paste0("italic('", Symbol, "')"), NA)),
+        size = 3, position = pos, parse = TRUE
+    ) +
+    scale_color_manual(values = gene_type_colors, drop = FALSE) +
+    facet_wrap(~gene_anno) +
+    ylim(0, 400) +
+    theme_bw() +
+    labs(y = "Total RNA t-statistic") +
+    theme(
+        legend.position = "none",
+        text = element_text(size = 15),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.x = element_blank()
+    )
+
+ggsave(invar_t_density, filename = here(plot_dir, "explore", "rank_invar_t_densitiy.png"), width = 6, height = 7.5)
+ggsave(invar_t_density, filename = here(plot_dir, "supp_pdf", "rank_invar_t_densitiy.pdf"), width = 6, height = 7.5)
+
+#### GO Enrichment ####
+library(org.Hs.eg.db)
+library(clusterProfiler)
+
+## define universe
+all_entrez <- bitr(gene_metrics2$ensembl_id, fromType = "ENSEMBL", toType ="ENTREZID", OrgDb="org.Hs.eg.db")
+nrow(all_entrez)
+# [1] 18296
+u <- all_entrez$ENTREZ
+
+## List top 10% (87) of the rank invar genes
+top_RI <- gene_metrics2 %>%
+    filter(!is.na(rank_invar)) %>%
+    arrange(-rank_invar) %>%
+    head(sum(!is.na(gene_metrics2$rank_invar))%/%10) %>%
+    pull(ensembl_id)
+
+top_RI_entrez <- bitr(top_RI, fromType = "ENSEMBL", toType ="ENTREZID", OrgDb="org.Hs.eg.db")$ENTREZ
+length(top_RI_entrez)
+# [1] 86
+
+## Run Enrichment 
+
+go_all <- compareCluster(geneClusters = list(topRI = top_RI_entrez), 
+                         univ = u,
+                         OrgDb = "org.Hs.eg.db", 
+                         fun = "enrichGO",
+                         ont = "ALL")
+# 
+# ont <- c("BP", "CC", "MF", "ALL")
+# names(ont) <- ont
+# go_output = map(ont, ~compareCluster(geneClusters = top_RI_entrez, 
+#                                        univ = u,
+#                                        OrgDb = "org.Hs.eg.db", 
+#                                        fun = "enrichGO",
+#                                        ont = .x))
+
+save(go_output, file = here("processed-data", "01_find_tregs","enrichGO.Rdata"))
+
+#### Marker Test ####
+## Marker genes from Tran Maynard et al.
 ## https://github.com/LieberInstitute/10xPilot_snRNAseq-human/blob/810b47364af4c8afe426bd2a6b559bd6a9f1cc98/tables/revision/top40genesLists_DLPFC-n3_cellType_SN-LEVEL-tests_LAH2020.csv
 tran_markers <- read.csv(here("raw-data", "top40genesLists_DLPFC-n3_cellType_SN-LEVEL-tests_LAH2020.csv"))
 
@@ -68,36 +201,24 @@ markers_anno <- tran_markers_long %>%
 # 5 Tran_1vAll,Tran_pw,Park    20
 # 6 Tran_pw                   188
 
-## export version
 gene_metrics2 <- gene_metrics2 %>%
     left_join(markers_anno)
 
-head(gene_metrics2)
-#         Symbol      ensembl_id top50 max_PropZero PropZero_filter rank_invar Gene Type          t Marker
-#   1 AL627309.1 ENSG00000238009  TRUE      1.00000           FALSE         NA      <NA>  51.188405   <NA>
-#   2 AC114498.1 ENSG00000235146 FALSE           NA           FALSE         NA      <NA>   9.844346   <NA>
-#   3 AL669831.5 ENSG00000237491  TRUE      0.96875           FALSE         NA      <NA> 106.687296   <NA>
-#   4  LINC00115 ENSG00000225880 FALSE           NA           FALSE         NA      <NA>  18.115699   <NA>
-#   5     FAM41C ENSG00000230368 FALSE           NA           FALSE         NA      <NA>   8.931643   <NA>
-#   6 AL645608.7 ENSG00000272438 FALSE           NA           FALSE         NA      <NA>   6.048259   <NA>
-write.csv(gene_metrics2, here("processed-data", "01_find_tregs", "supp_tables", "gene_metrics2.csv"))
-
-
 ## plotting version
-gene_metrics_marker <- gene_metrics2 %>%
-    rename(gene_type = `Gene Type`) %>%
-    mutate(`Gene Type` = factor(ifelse(!is.na(Marker), Marker, gene_type),
-        levels = c(
-            "TREG Canidate", "Classic HK", "Data Driven HK",
-            "Tran_1vAll", "Tran_pw", "Park", "Tran_1vAll,Tran_pw",
-            "Tran_1vAll,Park", "Tran_1vAll,Tran_pw,Park", "None"
-        )
-    )) %>%
-    replace_na(list(`Gene Type` = "None"))
+# gene_metrics_marker <- gene_metrics2 %>%
+#     rename(gene_type = `Gene Type`) %>%
+#     mutate(`Gene Type` = factor(ifelse(!is.na(Marker), Marker, gene_type),
+#         levels = c(
+#             "TREG Canidate", "Classic HK", "Data Driven HK",
+#             "Tran_1vAll", "Tran_pw", "Park", "Tran_1vAll,Tran_pw",
+#             "Tran_1vAll,Park", "Tran_1vAll,Tran_pw,Park", "None"
+#         )
+#     )) %>%
+#     replace_na(list(`Gene Type` = "None"))
 
 ## no overlapping Marker + gene_type annotations
-gene_metrics_marker %>%
-    count(Marker, gene_type, `Gene Type`) %>%
+gene_metrics2 %>%
+    count(`Gene Type`) %>%
     arrange(`Gene Type`)
 
 ## 11 genes are markers + have RI vals
@@ -119,98 +240,6 @@ gene_metrics_marker %>%
 # 11    TLE4 ENSG00000106829  TRUE    0.6939891            TRUE       83.0      <NA>  99.10509            Tran_pw
 
 
-#### t-stat plots ####
-gene_metrics_marker2 <- gene_metrics_marker %>%
-    mutate(
-        gene_anno = case_when(
-            !top50 ~ "Fail 50% Exp.",
-            !PropZero_filter ~ "Fail Prop. Zero",
-            TRUE ~ "Evaluated RI"
-        ),
-        label1 = Symbol %in% c("ARID1B", "AKT3", "MALAT1", "POLR2A"),
-        label2 = `Gene Type` != "None",
-        alpha = `Gene Type` != "None"
-    )
-
-gene_metrics_marker2 %>% dplyr::count(gene_anno, `Gene Type`)
-# gene_anno               Gene Type     n
-# 1    Fail 50% Exp.              Classic HK     2
-# 2    Fail 50% Exp.          Data Driven HK     1
-# 3    Fail 50% Exp.              Tran_1vAll    14
-# 4    Fail 50% Exp.                 Tran_pw    24
-# 5    Fail 50% Exp.                    Park    14
-# 6    Fail 50% Exp.      Tran_1vAll,Tran_pw   100
-# 7    Fail 50% Exp.         Tran_1vAll,Park     1
-# 8    Fail 50% Exp. Tran_1vAll,Tran_pw,Park     3
-# 9    Fail 50% Exp.                    None 11360
-# 10 Fail Prop. Zero              Classic HK    10
-# 11 Fail Prop. Zero          Data Driven HK     7
-# 12 Fail Prop. Zero              Tran_1vAll   186
-# 13 Fail Prop. Zero                 Tran_pw   158
-# 14 Fail Prop. Zero                    Park    17
-# 15 Fail Prop. Zero      Tran_1vAll,Tran_pw   292
-# 16 Fail Prop. Zero         Tran_1vAll,Park     7
-# 17 Fail Prop. Zero Tran_1vAll,Tran_pw,Park    17
-# 18 Fail Prop. Zero                    None  9948
-# 19              RI           TREG Canidate     3
-# 20              RI              Tran_1vAll     3
-# 21              RI                 Tran_pw     6
-# 22              RI      Tran_1vAll,Tran_pw     2
-# 23              RI                    None   863
-
-## t-stat plots
-plot_dir <- "plots/01_find_tregs"
-gene_type_colors <- create_cell_colors(levels(gene_metrics_marker$`Gene Type`), pallet = "gg")
-gene_type_colors["None"] <- "grey"
-
-invar_t_scatter <- gene_metrics_marker2 %>%
-    filter(gene_anno == "Evaluated RI") %>%
-    ggplot(aes(x = rank_invar, y = t)) +
-    geom_point(alpha = 0.2, color = "grey") +
-    geom_point(
-        data = filter(gene_metrics_marker2, label2, gene_anno == "Evaluated RI"),
-        aes(color = `Gene Type`)
-    ) +
-    geom_point(data = filter(gene_metrics_marker2, label1, gene_anno == "Evaluated RI"), shape = 21, color = "black") +
-    geom_text_repel(aes(label = ifelse(label2, paste0("italic('", Symbol, "')"), NA)),
-        size = 3, parse = TRUE
-    ) +
-    scale_color_manual(values = gene_type_colors, drop = FALSE) +
-    ylim(0, 400) +
-    theme_bw() +
-    facet_wrap(~gene_anno) +
-    labs(x = "Rank Invariance", y = "Total RNA t-statistic") +
-    theme(text = element_text(size = 15))
-
-ggsave(invar_t_scatter, filename = here(plot_dir, "explore", "rank_invar_t_scatter.png"), width = 6)
-ggsave(invar_t_scatter, filename = here(plot_dir, "supp_pdf", "rank_invar_t_scatter.pdf"), width = 6)
-
-## Denisity/jitter plot
-pos <- position_jitter(width = 0.3, seed = 2)
-invar_t_density <- gene_metrics_marker2 %>%
-    filter(gene_anno != "Evaluated RI") %>%
-    ggplot(aes(x = `Gene Type`, y = t)) +
-    geom_point(aes(color = `Gene Type`, alpha = alpha), position = pos) +
-    # geom_point(aes(alpha = alpha, color = `Gene Type`), position = pos) +
-    # geom_point(data = filter(gene_metrics_marker2, label2, gene_anno != "Evaluated RI"),
-    #            aes(fill= `Gene Type`), shape=21, color = "black", position = pos)+
-    geom_text_repel(aes(label = ifelse(label1, paste0("italic('", Symbol, "')"), NA)),
-        size = 3, position = pos, parse = TRUE
-    ) +
-    scale_color_manual(values = gene_type_colors, drop = FALSE) +
-    facet_wrap(~gene_anno) +
-    ylim(0, 400) +
-    theme_bw() +
-    labs(y = "Total RNA t-statistic") +
-    theme(
-        legend.position = "none",
-        text = element_text(size = 15),
-        axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.title.x = element_blank()
-    )
-
-ggsave(invar_t_density, filename = here(plot_dir, "explore", "rank_invar_t_densitiy.png"), width = 5, height = 7.5)
-ggsave(invar_t_density, filename = here(plot_dir, "supp_pdf", "rank_invar_t_densitiy.pdf"), width = 5, height = 7.5)
 
 #### Upset Plots ####
 gene_metrics_filter <- gene_metrics %>% filter(!is.na(`Gene Type`))
@@ -226,6 +255,10 @@ map(gene_lists, head)
 pdf(here(plot_dir, "supp_pdf", "upset.pdf"))
 upset(fromList(gene_lists), order.by = "freq", nset = length(gene_lists))
 dev.off()
+
+
+
+
 
 # sgejobs::job_single('gene_check', create_shell = TRUE, queue= 'bluejay', memory = '5G', command = "Rscript gene_check.R")
 ## Reproducibility information
