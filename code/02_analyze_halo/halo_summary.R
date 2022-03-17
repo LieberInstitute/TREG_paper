@@ -325,8 +325,9 @@ halo_all$cell_type <- ordered(halo_all$cell_type, levels = c("Excit", "Inhib", "
 ## box plots
 n_puncta_boxplot <- halo_all %>%
     ggplot(aes(x = cell_type, fill = cell_type, y = n_puncta)) +
-    geom_jitter(size = 0.5, alpha = 0.1, color = "grey")+
-    geom_boxplot(outlier.shape = NA) +
+    # geom_jitter(size = 0.5, alpha = 0.1, color = "grey")+
+    # geom_boxplot(outlier.shape = NA) +
+    geom_boxplot() +
     facet_wrap(~RI_gene, scales = "free_x", nrow = 1) +
     scale_fill_manual(values = halo_colors) +
     theme_bw() +
