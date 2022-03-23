@@ -5,6 +5,8 @@ library("ggrepel")
 library("UpSetR")
 library("DeconvoBuddies")
 library("jaffelab")
+library("org.Hs.eg.db")
+library("clusterProfiler")
 
 genes_of_interest <- read.csv(here("processed-data", "01_find_tregs", "supp_tables", "genes_of_interest.csv"), row.names = 1)
 gene_metrics <- read.csv(here("processed-data", "01_find_tregs", "supp_tables", "gene_metrics.csv"), row.names = 1)
@@ -16,6 +18,25 @@ gene_metrics <- gene_metrics %>%
 
 gene_metrics %>%
     filter(!is.na(`Gene Type`))
+
+
+## Eisenberg et al. HKGs
+eb_HKG <- c("C1orf43", "CHMP2A", "EMC7", "GPI", "PSMB2","PSMB4","RAB7A","REEP5","SNRPD3","VCP","VPS29")
+# Symbol      ensembl_id top50 max_PropZero PropZero_filter rank_invar Gene Type
+#     1    PSMB2 ENSG00000126067  TRUE    1.0000000           FALSE         NA      <NA>
+#     2    PSMB4 ENSG00000159377  TRUE    0.9793814           FALSE         NA      <NA>
+#     3  C1orf43 ENSG00000143612  TRUE    0.9062500           FALSE         NA      <NA>
+#     4    RAB7A ENSG00000075785  TRUE    0.6451613            TRUE        695      <NA>
+#     5    REEP5 ENSG00000129625  TRUE    0.8750000           FALSE         NA      <NA>
+#     6      VCP ENSG00000165280  TRUE    0.9375000           FALSE         NA      <NA>
+#     7    VPS29 ENSG00000111237  TRUE    0.8636364           FALSE         NA      <NA>
+#     8     EMC7 ENSG00000134153  TRUE    0.9677419           FALSE         NA      <NA>
+#     9      GPI ENSG00000105220  TRUE    0.8939394           FALSE         NA      <NA>
+#     10  CHMP2A ENSG00000130724 FALSE           NA           FALSE         NA      <NA>
+#     11  SNRPD3 ENSG00000100028  TRUE    0.9298469           FALSE         NA      <NA>
+
+
+gene_metrics %>%filter(Symbol %in% eb_HKG)
 
 ## Add T-stats
 load(here("processed-data", "01_find_tregs", "lmfit.Rdata"), verbose = TRUE) # tt
@@ -51,12 +72,12 @@ gene_metrics3 <- gene_metrics2 %>%
         label1 = Symbol %in% c("ARID1B", "AKT3", "MALAT1", "POLR2A"),
         label2 = `Gene Type` != "None",
         alpha = `Gene Type` != "None",
-        `Gene Type` = factor(`Gene Type`, levels = c('TREG Canidate', 'Classic HK', "Data Driven HK", "None"))
+        `Gene Type` = factor(`Gene Type`, levels = c('TREG Candidate', 'Classic HK', "Data Driven HK", "None"))
     )
 
 gene_metrics3 %>% dplyr::count(gene_anno, `Gene Type`)
 #         gene_anno      Gene Type     n
-# 1    Evaluated RI  TREG Canidate     3
+# 1    Evaluated RI  TREG Candidate     3
 # 2    Evaluated RI           None   874
 # 3   Fail 50% Exp.     Classic HK     2
 # 4   Fail 50% Exp. Data Driven HK     1
@@ -69,6 +90,7 @@ gene_metrics3 %>% dplyr::count(gene_anno, `Gene Type`)
 plot_dir <- "plots/01_find_tregs"
 gene_type_colors <- create_cell_colors(levels(gene_metrics3$`Gene Type`), pallet = "gg")
 gene_type_colors["None"] <- "grey"
+gene_type_colors["TRUE"] <- "blue"
 
 invar_t_scatter <- gene_metrics3 %>%
     filter(gene_anno == "Evaluated RI") %>%
@@ -79,8 +101,9 @@ invar_t_scatter <- gene_metrics3 %>%
         aes(color = `Gene Type`)
     ) +
     geom_point(data = filter(gene_metrics3, label1, gene_anno == "Evaluated RI"), shape = 21, color = "black") +
-    geom_text_repel(aes(label = ifelse(label2, paste0("italic('", Symbol, "')"), NA)),
-        size = 3, parse = TRUE
+    geom_text_repel(aes(label = ifelse(label2, paste0("italic('", Symbol, "')"), NA),
+                        color = label1),
+        size = 3, parse = TRUE, show.legend = FALSE
     ) +
     scale_color_manual(values = gene_type_colors, drop = FALSE) +
     ylim(0, 400) +
@@ -101,7 +124,8 @@ invar_t_density <- gene_metrics3 %>%
     # geom_point(aes(alpha = alpha, color = `Gene Type`), position = pos) +
     # geom_point(data = filter(gene_metrics3, label2, gene_anno != "Evaluated RI"),
     #            aes(fill= `Gene Type`), shape=21, color = "black", position = pos)+
-    geom_text_repel(aes(label = ifelse(label2, paste0("italic('", Symbol, "')"), NA)),
+    geom_text_repel(aes(label = ifelse(label2, paste0("italic('", Symbol, "')"), NA),
+                        color = label1),
         size = 3, position = pos, parse = TRUE
     ) +
     scale_color_manual(values = gene_type_colors, drop = FALSE) +
@@ -120,8 +144,6 @@ ggsave(invar_t_density, filename = here(plot_dir, "explore", "rank_invar_t_densi
 ggsave(invar_t_density, filename = here(plot_dir, "supp_pdf", "rank_invar_t_densitiy.pdf"), width = 6, height = 7.5)
 
 #### GO Enrichment ####
-library(org.Hs.eg.db)
-library(clusterProfiler)
 
 ## define universe
 all_entrez <- bitr(gene_metrics2$ensembl_id, fromType = "ENSEMBL", toType ="ENTREZID", OrgDb="org.Hs.eg.db")
@@ -142,22 +164,28 @@ length(top_RI_entrez)
 
 ## Run Enrichment 
 
-go_all <- compareCluster(geneClusters = list(topRI = top_RI_entrez), 
-                         univ = u,
-                         OrgDb = "org.Hs.eg.db", 
-                         fun = "enrichGO",
-                         ont = "ALL")
-# 
-# ont <- c("BP", "CC", "MF", "ALL")
-# names(ont) <- ont
-# go_output = map(ont, ~compareCluster(geneClusters = top_RI_entrez, 
-#                                        univ = u,
-#                                        OrgDb = "org.Hs.eg.db", 
-#                                        fun = "enrichGO",
-#                                        ont = .x))
+# go_all <- compareCluster(geneClusters = list(topRI = top_RI_entrez), 
+#                          univ = u,
+#                          OrgDb = "org.Hs.eg.db", 
+#                          fun = "enrichGO",
+#                          ont = "ALL")
+
+
+ont <- c("BP", "CC", "MF", "ALL")
+names(ont) <- ont
+go_output = map(ont, ~compareCluster(geneClusters = list(topRI = top_RI_entrez),
+                                       univ = u,
+                                       OrgDb = "org.Hs.eg.db",
+                                       fun = "enrichGO",
+                                       ont = .x))
+
+pdf(here(plot_dir, "explore", "go_all_top87.pdf"))
+map2(go_output, names(go_output), ~dotplot(.x, title = .y))
+dev.off()
 
 save(go_output, file = here("processed-data", "01_find_tregs","enrichGO.Rdata"))
 
+map(go_output, as.data.frame)
 #### Marker Test ####
 ## Marker genes from Tran Maynard et al.
 ## https://github.com/LieberInstitute/10xPilot_snRNAseq-human/blob/810b47364af4c8afe426bd2a6b559bd6a9f1cc98/tables/revision/top40genesLists_DLPFC-n3_cellType_SN-LEVEL-tests_LAH2020.csv
@@ -209,7 +237,7 @@ gene_metrics2 <- gene_metrics2 %>%
 #     rename(gene_type = `Gene Type`) %>%
 #     mutate(`Gene Type` = factor(ifelse(!is.na(Marker), Marker, gene_type),
 #         levels = c(
-#             "TREG Canidate", "Classic HK", "Data Driven HK",
+#             "TREG Candidate", "Classic HK", "Data Driven HK",
 #             "Tran_1vAll", "Tran_pw", "Park", "Tran_1vAll,Tran_pw",
 #             "Tran_1vAll,Park", "Tran_1vAll,Tran_pw,Park", "None"
 #         )
@@ -257,8 +285,32 @@ upset(fromList(gene_lists), order.by = "freq", nset = length(gene_lists))
 dev.off()
 
 
+## Mean ratio markers 
+load("/dcl01/lieber/ajaffe/lab/deconvolution_bsp2/data/marker_stats_pan.v2.Rdata", verbose = TRUE)
+
+marker_stats <- marker_stats %>%
+    filter(rank_ratio <= 25) 
 
 
+gene_metrics2 %>%
+    left_join(marker_stats %>% select(Symbol, cellType))  %>%
+    count(`Gene Type`, cellType)
+
+#         Gene Type cellType     n
+# 1      Classic HK     <NA>    12
+# 2  Data Driven HK     <NA>     8
+# 3  TREG Candidate     <NA>     3
+# 4            <NA>    Astro    11
+# 5            <NA>     Endo    25
+# 6            <NA>    Macro    23
+# 7            <NA>    Micro    32
+# 8            <NA>    Mural    48
+# 9            <NA>    Oligo     8
+# 10           <NA>      OPC    11
+# 11           <NA>    Tcell    11
+# 12           <NA>    Excit    46
+# 13           <NA>    Inhib    35
+# 14           <NA>     <NA> 22765
 
 # sgejobs::job_single('gene_check', create_shell = TRUE, queue= 'bluejay', memory = '5G', command = "Rscript gene_check.R")
 ## Reproducibility information
