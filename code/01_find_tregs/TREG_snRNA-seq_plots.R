@@ -68,7 +68,7 @@ data_driven_HK <- c("NDUFB4", "NDUFB1", "GSTO1", "AMZ2", "POLR2I", "NDUFA3", "RR
 genes_of_interest <- tibble(
     Symbol = c(treg_list, dotdotdot_genes, data_driven_HK),
     gene_anno = c(
-        rep("TREG Canidate", length(treg_list)),
+        rep("TREG Candidate", length(treg_list)),
         rep("Classic HK", length(dotdotdot_genes)),
         rep("Data Driven HK", length(data_driven_HK))
     )
