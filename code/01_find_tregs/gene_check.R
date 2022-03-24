@@ -294,23 +294,24 @@ marker_stats <- marker_stats %>%
 
 gene_metrics2 %>%
     left_join(marker_stats %>% select(Symbol, cellType))  %>%
-    count(`Gene Type`, cellType)
+    count(`Gene Type`, cellType, PropZero_filter, !is.na(rank_invar))
 
-#         Gene Type cellType     n
-# 1      Classic HK     <NA>    12
-# 2  Data Driven HK     <NA>     8
-# 3  TREG Candidate     <NA>     3
-# 4            <NA>    Astro    11
-# 5            <NA>     Endo    25
-# 6            <NA>    Macro    23
-# 7            <NA>    Micro    32
-# 8            <NA>    Mural    48
-# 9            <NA>    Oligo     8
-# 10           <NA>      OPC    11
-# 11           <NA>    Tcell    11
-# 12           <NA>    Excit    46
-# 13           <NA>    Inhib    35
-# 14           <NA>     <NA> 22765
+#         Gene Type cellType !is.na(rank_invar)     n
+# 1      Classic HK     <NA>              FALSE    12
+# 2  Data Driven HK     <NA>              FALSE     8
+# 3   TREG Canidate     <NA>               TRUE     3
+# 4            <NA>    Astro              FALSE    11
+# 5            <NA>     Endo              FALSE    25
+# 6            <NA>    Macro              FALSE    23
+# 7            <NA>    Micro              FALSE    32
+# 8            <NA>    Mural              FALSE    48
+# 9            <NA>    Oligo              FALSE     8
+# 10           <NA>      OPC              FALSE    11
+# 11           <NA>    Tcell              FALSE    11
+# 12           <NA>    Excit              FALSE    46
+# 13           <NA>    Inhib              FALSE    35
+# 14           <NA>     <NA>              FALSE 21891
+# 15           <NA>     <NA>               TRUE   874
 
 # sgejobs::job_single('gene_check', create_shell = TRUE, queue= 'bluejay', memory = '5G', command = "Rscript gene_check.R")
 ## Reproducibility information
