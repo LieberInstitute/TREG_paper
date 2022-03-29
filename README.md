@@ -10,13 +10,13 @@ In this repository we applied functions from `TREG` to find candidate TREGs in p
 ### Organization
 Organization of this project is guided by [R/Bioconductor-powered Team Data Science](https://lcolladotor.github.io/bioc_team_ds/organizing-your-work.html#.YkNW_DfMJfV.)
 
-* `raw-data/`: HALO output, RNAscope images, note most of these files are too big for github but can be accessed via [globus](http://research.libd.org/globus/)
+* `raw-data`: HALO output, RNAscope images, note most of these files are too big for github but can be accessed via [globus](http://research.libd.org/globus/)
 
 * `code`: R and shell scripts
   + `01_find_tregs`: Run the TREG discovery pipeline, explore results in the snRNA-seq data  
   + `02_analyze_halo`: Import, quality control, and analyze halo segmentation data  from smFISH validation 
 
-* `processes-data`: Data output from analysis as `.Rdata` or `.csv` files
+* `processed-data`: Data output from analysis as `.Rdata` or `.csv` files
 
 * `plots`: pdfs used in main & supplementary figures are separated from other exploratory plots created in this project. 
 
