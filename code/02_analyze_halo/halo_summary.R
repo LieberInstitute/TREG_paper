@@ -545,20 +545,22 @@ excit_v_oligo <- halo_all %>%
     filter(RI_gene == "AKT3",
            cell_type %in% c("Oligo",'Excit')) %>%
     ungroup() %>%
-    lm(n_puncta ~ nucleus_area + cell_type, data = .)
+    lm(n_puncta ~ nucleus_area*cell_type, data = .)
 
 summary(excit_v_oligo)
-# Coefficients:
-#                      Estimate Std. Error t value Pr(>|t|)    
-#     (Intercept)    -3.1668887  0.0151339  -209.3   <2e-16 ***
-#     nucleus_area    0.1213705  0.0002805   432.7   <2e-16 ***
-#     cell_typeExcit  5.7834422  0.0145620   397.2   <2e-16 ***
-#     ---
-#     Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+# Residuals:
+#     Min       1Q   Median       3Q      Max 
+# -14.5827  -1.1727  -0.1537   1.0630  19.1617 
 # 
-# Residual standard error: 2.264 on 109232 degrees of freedom
-# Multiple R-squared:  0.823,     Adjusted R-squared:  0.823 
-# F-statistic: 2.54e+05 on 2 and 109232 DF,  p-value: < 2.2e-16
+# Coefficients:
+#                                    Estimate Std. Error t value Pr(>|t|)    
+#     (Intercept)                 -0.1491385  0.0237221  -6.287 3.25e-10 ***
+#     nucleus_area                 0.0510418  0.0005179  98.552  < 2e-16 ***
+#     cell_typeExcit               1.4416543  0.0308293  46.762  < 2e-16 ***
+#     nucleus_area:cell_typeExcit  0.0925428  0.0005941 155.767  < 2e-16 ***
+
+summary(excit_v_oligo)$coef[4,4]
 
 #### Check out RI Expression by XY ####
 hex_ri <- halo_all %>%
