@@ -21,6 +21,7 @@ slope_anno <- function(lm_fit, digits = 1) {
     return(slope_anno)
 }
 
+#### Set up plotting variables ####
 plot_dir <- "plots/02_analyze_halo"
 ## new cell colors ##
 load(here("processed-data", "00_data_prep", "cell_colors.Rdata"), verbose = TRUE)
@@ -501,13 +502,15 @@ n_puncta_size_scatter <- halo_all %>%
     ggplot(aes(x = nucleus_area, y = n_puncta)) +
     geom_point(aes(color = cell_type), size = 0.2, alpha = 0.2) +
     geom_smooth(method = "lm", color = "black") +
-    geom_text(data = puncta_v_size_anno, aes(label = anno), parse = TRUE , x = 40, y = 40, size = 3) +
+    geom_text(data = puncta_v_size_anno, aes(label = anno), parse = TRUE , x = 45, y = 45, size = 3) +
     scale_color_manual(values = halo_colors) +
     facet_grid(RI_gene ~ cell_type) +
     labs(x = bquote("Nucleus Area µm"^2), 
          y = "Number of Puncta") +
     theme_bw() +
-    theme(text = element_text(size = 15), legend.position = "none")
+    theme(text = element_text(size = 15), 
+          strip.text.y = element_text(face="italic"),
+          legend.position = "none")
 
 ggsave(n_puncta_size_scatter, filename = here(plot_dir, "explore", "puncta_size_scatter.png"), width = 9)
 ggsave(n_puncta_size_scatter, filename = here(plot_dir, "supp_pdf", "puncta_size_scatter.pdf"), width = 9)
@@ -535,6 +538,27 @@ hex_mean_area <- halo_all %>%
     theme(legend.position = "bottom")
 
 ggsave(hex_mean_area, filename = here(plot_dir, "explore", "hex_mean_area.png"))
+
+## check out AKT3 excit vs. oligo stats
+
+excit_v_oligo <- halo_all %>%
+    filter(RI_gene == "AKT3",
+           cell_type %in% c("Oligo",'Excit')) %>%
+    ungroup() %>%
+    lm(n_puncta ~ nucleus_area + cell_type, data = .)
+
+summary(excit_v_oligo)
+# Coefficients:
+#                      Estimate Std. Error t value Pr(>|t|)    
+#     (Intercept)    -3.1668887  0.0151339  -209.3   <2e-16 ***
+#     nucleus_area    0.1213705  0.0002805   432.7   <2e-16 ***
+#     cell_typeExcit  5.7834422  0.0145620   397.2   <2e-16 ***
+#     ---
+#     Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 2.264 on 109232 degrees of freedom
+# Multiple R-squared:  0.823,     Adjusted R-squared:  0.823 
+# F-statistic: 2.54e+05 on 2 and 109232 DF,  p-value: < 2.2e-16
 
 #### Check out RI Expression by XY ####
 hex_ri <- halo_all %>%
