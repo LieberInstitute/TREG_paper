@@ -4,6 +4,7 @@ library("DeconvoBuddies")
 library("SingleCellExperiment")
 library("jaffelab")
 library("broom")
+library("sessioninfo")
 
 slope_anno <- function(lm_fit, digits = 1) {
     ci <- confint(lm_fit)
@@ -470,7 +471,7 @@ nuc_area_boxplot <- halo_all %>%
 
 ggsave(nuc_area_boxplot, filename = here(plot_dir, "explore", "nucleus_area_boxplot_grant.png"))
 
-## Area vs. puncta ##
+#### Area vs. puncta ####
 
 puncta_v_size <- halo_all %>%
     ungroup() %>%
@@ -490,23 +491,26 @@ puncta_v_size <- halo_all %>%
         log.p.bonf = -log10(p.bonf)
     )
 
-puncta_v_size_rm0 <- halo_all %>%
-    filter(n_puncta != 0) %>%
-    group_by(RI_gene, cell_type) %>%
-    do(fitPuncta = tidy(lm(n_puncta ~ nucleus_area, data = .))) %>%
-    unnest(fitPuncta)
+puncta_v_size_anno <- puncta_v_size %>%
+    select(RI_gene, cell_type, estimate, std.error) %>%
+    mutate(anno = paste("beta ==", round(estimate, 3)
+                        # ,"\nse ==", formatC(std.error, format = "e", digits = 1)
+                        ))
 
 n_puncta_size_scatter <- halo_all %>%
     ggplot(aes(x = nucleus_area, y = n_puncta)) +
     geom_point(aes(color = cell_type), size = 0.2, alpha = 0.2) +
     geom_smooth(method = "lm", color = "black") +
+    geom_text(data = puncta_v_size_anno, aes(label = anno), parse = TRUE , x = 40, y = 40, size = 3) +
     scale_color_manual(values = halo_colors) +
     facet_grid(RI_gene ~ cell_type) +
-    labs(x = "Nucleus Area µm", y = "Number of Puncta") +
+    labs(x = bquote("Nucleus Area µm"^2), 
+         y = "Number of Puncta") +
     theme_bw() +
     theme(text = element_text(size = 15), legend.position = "none")
 
 ggsave(n_puncta_size_scatter, filename = here(plot_dir, "explore", "puncta_size_scatter.png"), width = 9)
+ggsave(n_puncta_size_scatter, filename = here(plot_dir, "supp_pdf", "puncta_size_scatter.pdf"), width = 9)
 
 #### Spatial ####
 hex_n_cells <- halo_all %>%
