@@ -13,18 +13,19 @@ plot_dir <- "plots/01_find_tregs"
 set.seed(10)
 demo_rank_data <- tibble(
     sample = 1:100,
-    `high\ninvariance` = round(rnorm(100, 75, 3), digits = 0),
-    `low\ninvariance` = sample(1:100, 100, replace = TRUE)
+    `Gene 1:\nhigh invariance` = round(rnorm(100, 75, 3), digits = 0),
+    `Gene 2:\nlow invariance` = sample(1:100, 100, replace = TRUE)
 ) %>%
     pivot_longer(!sample, names_to = "Gene", values_to = "Expression Rank")
 
 rank_demo_violin <- ggplot(demo_rank_data, aes(x = Gene, y = `Expression Rank`)) +
     geom_violin(fill = "light grey") +
     theme_bw() +
-    theme(text = element_text(size = 15))
+    theme(text = element_text(size = 15),
+          axis.title.x = element_blank())
 
 # ggsave(rank_demo_violin, filename = here(plot_dir, "main_pdf","fig1_rank_violin_demo.png"), width = 3, height = 6)
-ggsave(rank_demo_violin, filename = here(plot_dir, "main_pdf", "fig1_rank_violin_demo.pdf"), width = 3, height = 3)
+ggsave(rank_demo_violin, filename = here(plot_dir, "main_pdf", "fig1_rank_violin_demo.pdf"), width = 3.5, height = 3)
 
 #### Prep sce data ####
 load(here("raw-data", "sce_pan.v2.Rdata"), verbose = TRUE)
