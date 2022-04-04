@@ -70,3 +70,9 @@ density_diff_RI <- gene_metrics %>%
 
 ggsave(density_diff_RI, filename = here(plot_dir, "explore","velm_RI_diff_density.png"))
 
+## Reproducibility information
+print("Reproducibility information:")
+Sys.time()
+proc.time()
+options(width = 120)
+session_info()
