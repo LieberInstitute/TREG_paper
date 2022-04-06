@@ -1,0 +1,18 @@
+cluster,cellType.Broad,Note
+AST-FB,Astro,
+AST-PP,Astro,
+Endothelial,Endo,
+IN-PV,Inhib,
+IN-SST,Inhib,
+IN-SV2C,Inhib,
+IN-VIP,Inhib,
+L2/3,Excit,
+L4,Excit,
+L5/6,Excit,
+L5/6-CC,Excit,
+Microglia,Micro,
+Neu-mat,Excit,
+Neu-NRGN-I,Excit,Could be mix excit/inhib based on GAD1 marker plot in figure; expresses slc17a7
+Neu-NRGN-II,Excit,SLC17A7
+Oligodendrocytes,Oligo,
+OPC,OPC,
