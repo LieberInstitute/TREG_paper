@@ -6,25 +6,125 @@ library("here")
 library("sessioninfo")
 library("GGally")
 
+## Load data
+plot_dir <- "plots/01_find_tregs"
+load(here("processed-data", "00_data_prep", "cell_colors.Rdata"), verbose = TRUE)
 load(here("raw-data", "sce_pan.v2.Rdata"), verbose = TRUE)
 gene_metrics <- read.csv(here("processed-data", "01_find_tregs", "supp_tables", "gene_metrics.csv"), row.names = 1)
 
 #### Prep Data ####
 ## Refine region lables
-sce_pan$region2 <- toupper(sce_pan$region)
-sce_pan$region2[sce_pan$region2 == "SACC"] <- "sACC"
-sce_pan$region2[sce_pan$region2 == "NAC"] <- "NAc"
+sce_pan$region <- toupper(sce_pan$region)
+sce_pan$region[sce_pan$region == "SACC"] <- "sACC"
+sce_pan$region[sce_pan$region == "NAC"] <- "NAc"
 
-table(sce_pan$region2)
-table(sce_pan$region2, sce_pan$cellType.Broad)
+table(sce_pan$region)
+table(sce_pan$region, sce_pan$cellType.Broad)
 #   AMY DLPFC   HPC   NAc  sACC 
 # 14006 11202 10104 19892 15323
 
+sce_pan$region2 <- sce_pan$region
 sce_pan$region2[sce_pan$cellType.Broad %in% c("Macro", "Mural", "Endo", "Tcell")] <- "combined"
+sce_pan$region <- as.factor(sce_pan$region)
 sce_pan$region2 <- as.factor(sce_pan$region2)
+# 
+# sce_pan$ctXregion <- paste0(sce_pan$cellType.Broad, "_", sce_pan$region2)
+# table(sce_pan$ctXregion)
 
-sce_pan$ctXregion <- paste0(sce_pan$cellType.Broad, "_", sce_pan$region2)
-table(sce_pan$ctXregion)
+#### Run Full filter + RI process per region ####
+## filter to top 50% expression & run get_prop_zero()
+region_propZero <- map2(splitit(sce_pan$region), levels(sce_pan$region), function(region_i, region_name){
+  Sys.time()
+  sce_region <- sce_pan[,region_i]
+  message('Region: ', region_name, ", n_nuc = ", ncol(sce_region))
+  row_means <- rowMeans(assays(sce_region)$logcounts)
+  median_row_means <- median(row_means)
+  sce_region <- sce_region[row_means > median_row_means, ]
+  message("Median Express: ", round(median_row_means, 3), ", n_gene = ", nrow(sce_region))
+  ## get prop zero
+  gene_propZero <- get_prop_zero(sce_region, "cellType.Broad")
+  return(gene_propZero)
+}
+)
+
+## Plot Prop Zero densities 
+pdf(here(plot_dir, "supp_pdf", "region_propZero_density.pdf"), width = 10)
+map2(region_propZero, names(region_propZero), function(propZero, region_name){
+  
+  propZero_long <- propZero %>%
+    rownames_to_column("gene") %>%
+    pivot_longer(!gene, values_to = "propZero") %>%
+    filter(!is.na(propZero)) %>%
+    mutate(cellType = factor(name, levels = levels(sce_pan$cellType.Broad)))
+  
+  propZero_long %>%
+    ggplot(aes(x = propZero, fill = cellType)) +
+    geom_histogram(binwidth = 0.05, color = "black", size = .2) +
+    scale_fill_manual(values = cell_colors) +
+    facet_wrap(~cellType) +
+    labs(title = region_name,
+         x = "Proportion Zero per Group", 
+         y = "Number of Genes") +
+    geom_vline(xintercept = 0.75, color = "red", linetype = "dashed") +
+    theme_bw() +
+    theme(
+      legend.position = "none",
+      text = element_text(size = 15),
+      axis.text.x = element_text(angle = 90, hjust = 1)
+    ) +
+    scale_y_continuous(breaks = seq(0, 3000, 1500)) +
+    scale_x_continuous(breaks = seq(0, 1, .5))
+  
+})
+dev.off()
+
+#### Calc RI build gene metrics for each region ####
+gene_metrics_blank <- rowData(sce_pan) %>%
+  as.data.frame() %>%
+  select(Symbol = gene_name, ensembl_id = gene_id)
+
+gene_metrics_region <- map2(region_propZero[1], splitit(sce_pan$region)[1], function(propZero, region_i){
+  ## Annotate top 50% genes
+  gene_metrics_r <- gene_metrics_blank
+  gene_metrics_r$top50 <- gene_metrics_r$ensembl_id %in% rownames(propZero)
+  
+  ## filter propZero
+  ## record max prop zero for gene metrics
+  max_propZero <- apply(propZero, 1, max, na.rm = TRUE)
+  gene_metrics_r$max_PropZero <- NA
+  gene_metrics_r[names(max_propZero), ]$max_PropZero <- max_propZero
+  
+  ## filter by Proportion Zero
+  propZero_limit <- 0.75
+  genes_filtered <- filter_prop_zero(propZero, cutoff = propZero_limit)
+  return(genes_filtered)
+  message("filter to: ", length(genes_filtered))
+  
+  sce_pan_temp <- sce_pan[genes_filtered,]
+  sce_pan_temp <- sce_pan_temp[, region_i]
+  message(str(dim(sce_pan)))
+  # [1]   877 70527
+  # 
+  # gene_metrics$PropZero_filter <- gene_metrics$ensembl_id %in% rownames(sce_pan)
+  # 
+  # #### Run Rank Invariance for full data set ####
+  # assays(sce_pan)$logcounts <- as.matrix(assays(sce_pan)$logcounts)
+  # 
+  # rank_invariance <- rank_invariance_express(sce_pan, group_col = "cellType.Broad")
+  # 
+  # rank_invar_df <- as.data.frame(rank_invariance)
+  # colnames(rank_invar_df) <- "rank_invar"
+  # 
+  # ## add to gene metrics
+  # gene_metrics <- gene_metrics %>%
+  #   left_join(rank_invar_df %>%
+  #               rownames_to_column("ensembl_id"))
+  # 
+  # head(gene_metrics)
+  
+  return(gene_metrics_r)
+})
+
 
 ## filter to 877 Prop Zero genes
 gene_set <- gene_metrics$ensembl_id[gene_metrics$PropZero_filter]
