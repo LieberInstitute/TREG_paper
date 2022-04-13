@@ -21,8 +21,10 @@ demo_rank_data <- tibble(
 rank_demo_violin <- ggplot(demo_rank_data, aes(x = Gene, y = `Expression Rank`)) +
     geom_violin(fill = "light grey") +
     theme_bw() +
-    theme(text = element_text(size = 15),
-          axis.title.x = element_blank())
+    theme(
+        text = element_text(size = 15),
+        axis.title.x = element_blank()
+    )
 
 # ggsave(rank_demo_violin, filename = here(plot_dir, "main_pdf","fig1_rank_violin_demo.png"), width = 3, height = 6)
 ggsave(rank_demo_violin, filename = here(plot_dir, "main_pdf", "fig1_rank_violin_demo.pdf"), width = 3.5, height = 3)
@@ -213,9 +215,9 @@ rank_violin_ct <- ggplot(rank_long, aes(x = cellType.Broad, y = rank, fill = cel
 ggsave(rank_violin_ct, filename = here(plot_dir, "main_pdf", "fig3_rank_violin_ct.pdf"), width = 5.5, height = 6)
 
 #### Expression Plots ####
-gene_symbol_ri <- gene_symbol[gene_symbol$Symbol %in% c(treg_list, "POLR2A"),]
+gene_symbol_ri <- gene_symbol[gene_symbol$Symbol %in% c(treg_list, "POLR2A"), ]
 
-ri_gene_lc <- assays(sce_pan)$logcounts[gene_symbol_ri$gene,]
+ri_gene_lc <- assays(sce_pan)$logcounts[gene_symbol_ri$gene, ]
 
 ri_gene_lc_long <- ri_gene_lc %>%
     as.matrix() %>%
@@ -239,25 +241,26 @@ expres_violin_ct <- ggplot(ri_gene_lc_long, aes(x = cellType.Broad, y = logcount
         strip.text.x = element_text(face = "italic")
     )
 
-ggsave(expres_violin_ct, filename = here(plot_dir, "explore","expres_violin_ct.png"), width = 5.5, height = 6)
+ggsave(expres_violin_ct, filename = here(plot_dir, "explore", "expres_violin_ct.png"), width = 5.5, height = 6)
 ggsave(expres_violin_ct, filename = here(plot_dir, "supp_pdf", "expres_violin_ct.pdf"), width = 5.5, height = 6)
 
 expres_violin_ct_region <- ggplot(ri_gene_lc_long, aes(x = cellType.Broad, y = logcount, fill = cellType.Broad)) +
     geom_violin(scale = "width") +
     # stat_summary(fun = median, geom = "crossbar", width = 0.3)+
     labs(x = "Cell Type") +
-    facet_grid(region~Symbol, scales = "free_y") +
+    facet_grid(region ~ Symbol, scales = "free_y") +
     scale_fill_manual(values = cell_colors) +
     labs(y = "logcounts") +
     theme_bw() +
-    theme(legend.position = "none",
+    theme(
+        legend.position = "none",
         axis.text.x = element_text(angle = 90, hjust = 1),
         strip.text.x = element_text(face = "italic")
     )
 
-ggsave(expres_violin_ct_region, filename = here(plot_dir, "explore","expres_violin_ct_region.png"), width = 10, height = 10)
+ggsave(expres_violin_ct_region, filename = here(plot_dir, "explore", "expres_violin_ct_region.png"), width = 10, height = 10)
 
-ri_gene_c_long <- assays(sce_pan)$counts[gene_symbol_ri$gene,] %>%
+ri_gene_c_long <- assays(sce_pan)$counts[gene_symbol_ri$gene, ] %>%
     as.matrix() %>%
     reshape2::melt() %>%
     dplyr::rename(gene = Var1, uniqueID = Var2, count = value) %>%
@@ -280,7 +283,7 @@ expres_violin_ct2 <- ggplot(ri_gene_c_long, aes(x = cellType.Broad, y = log2coun
         strip.text.x = element_text(face = "italic")
     )
 
-ggsave(expres_violin_ct2, filename = here(plot_dir, "explore","expres_violin_ct2.png"), width = 5.5, height = 6)
+ggsave(expres_violin_ct2, filename = here(plot_dir, "explore", "expres_violin_ct2.png"), width = 5.5, height = 6)
 
 
 sum_violin_ct <- ggplot(pd, aes(x = cellType.Broad, y = sum, fill = cellType.Broad)) +
@@ -296,7 +299,7 @@ sum_violin_ct <- ggplot(pd, aes(x = cellType.Broad, y = sum, fill = cellType.Bro
         axis.text.x = element_text(angle = 90, hjust = 1),
     )
 
-ggsave(sum_violin_ct, filename = here(plot_dir, "explore","sum_violin_ct.png"), width = 5.5, height = 6)
+ggsave(sum_violin_ct, filename = here(plot_dir, "explore", "sum_violin_ct.png"), width = 5.5, height = 6)
 
 
 #### Fig 3. Do Expression trends over cell type track in our HK genes? ####

@@ -21,7 +21,7 @@ gene_metrics %>%
 
 
 ## Eisenberg et al. HKGs
-eb_HKG <- c("C1orf43", "CHMP2A", "EMC7", "GPI", "PSMB2","PSMB4","RAB7A","REEP5","SNRPD3","VCP","VPS29")
+eb_HKG <- c("C1orf43", "CHMP2A", "EMC7", "GPI", "PSMB2", "PSMB4", "RAB7A", "REEP5", "SNRPD3", "VCP", "VPS29")
 # Symbol      ensembl_id top50 max_PropZero PropZero_filter rank_invar Gene Type
 #     1    PSMB2 ENSG00000126067  TRUE    1.0000000           FALSE         NA      <NA>
 #     2    PSMB4 ENSG00000159377  TRUE    0.9793814           FALSE         NA      <NA>
@@ -36,7 +36,7 @@ eb_HKG <- c("C1orf43", "CHMP2A", "EMC7", "GPI", "PSMB2","PSMB4","RAB7A","REEP5",
 #     11  SNRPD3 ENSG00000100028  TRUE    0.9298469           FALSE         NA      <NA>
 
 
-gene_metrics %>%filter(Symbol %in% eb_HKG)
+gene_metrics %>% filter(Symbol %in% eb_HKG)
 
 ## Add T-stats
 load(here("processed-data", "01_find_tregs", "lmfit.Rdata"), verbose = TRUE) # tt
@@ -72,7 +72,7 @@ gene_metrics3 <- gene_metrics2 %>%
         label1 = Symbol %in% c("ARID1B", "AKT3", "MALAT1", "POLR2A"),
         label2 = `Gene Type` != "None",
         alpha = `Gene Type` != "None",
-        `Gene Type` = factor(`Gene Type`, levels = c('TREG Candidate', 'Classic HK', "Data Driven HK", "None"))
+        `Gene Type` = factor(`Gene Type`, levels = c("TREG Candidate", "Classic HK", "Data Driven HK", "None"))
     )
 
 gene_metrics3 %>% dplyr::count(gene_anno, `Gene Type`)
@@ -101,9 +101,11 @@ invar_t_scatter <- gene_metrics3 %>%
         aes(color = `Gene Type`)
     ) +
     geom_point(data = filter(gene_metrics3, label1, gene_anno == "Evaluated RI"), shape = 21, color = "black") +
-    geom_text_repel(aes(label = ifelse(label2, paste0("italic('", Symbol, "')"), NA),
-                        color = label1),
-                    size = 3, parse = TRUE, show.legend = FALSE
+    geom_text_repel(aes(
+        label = ifelse(label2, paste0("italic('", Symbol, "')"), NA),
+        color = label1
+    ),
+    size = 3, parse = TRUE, show.legend = FALSE
     ) +
     scale_color_manual(values = gene_type_colors, drop = FALSE) +
     ylim(0, 400) +
@@ -124,9 +126,11 @@ invar_t_density <- gene_metrics3 %>%
     # geom_point(aes(alpha = alpha, color = `Gene Type`), position = pos) +
     # geom_point(data = filter(gene_metrics3, label2, gene_anno != "Evaluated RI"),
     #            aes(fill= `Gene Type`), shape=21, color = "black", position = pos)+
-    geom_text_repel(aes(label = ifelse(label2, paste0("italic('", Symbol, "')"), NA),
-                        color = label1),
-                    size = 3, position = pos, parse = TRUE
+    geom_text_repel(aes(
+        label = ifelse(label2, paste0("italic('", Symbol, "')"), NA),
+        color = label1
+    ),
+    size = 3, position = pos, parse = TRUE
     ) +
     scale_color_manual(values = gene_type_colors, drop = FALSE) +
     facet_wrap(~gene_anno) +
@@ -146,7 +150,7 @@ ggsave(invar_t_density, filename = here(plot_dir, "supp_pdf", "rank_invar_t_dens
 #### GO Enrichment ####
 
 ## define universe
-all_entrez <- bitr(gene_metrics2$ensembl_id, fromType = "ENSEMBL", toType ="ENTREZID", OrgDb="org.Hs.eg.db")
+all_entrez <- bitr(gene_metrics2$ensembl_id, fromType = "ENSEMBL", toType = "ENTREZID", OrgDb = "org.Hs.eg.db")
 nrow(all_entrez)
 # [1] 18296
 u <- all_entrez$ENTREZ
@@ -155,38 +159,42 @@ u <- all_entrez$ENTREZ
 top_RI <- gene_metrics2 %>%
     filter(!is.na(rank_invar)) %>%
     arrange(-rank_invar) %>%
-    head(sum(!is.na(gene_metrics2$rank_invar))%/%10) %>%
+    head(sum(!is.na(gene_metrics2$rank_invar)) %/% 10) %>%
     pull(ensembl_id)
 
-top_RI_entrez <- bitr(top_RI, fromType = "ENSEMBL", toType ="ENTREZID", OrgDb="org.Hs.eg.db")$ENTREZ
+top_RI_entrez <- bitr(top_RI, fromType = "ENSEMBL", toType = "ENTREZID", OrgDb = "org.Hs.eg.db")$ENTREZ
 length(top_RI_entrez)
 # [1] 86
 
-## Run Enrichment 
+## Run Enrichment
 ont <- c("BP", "CC", "MF")
 names(ont) <- ont
-go_output = map(ont, ~compareCluster(geneClusters = list(topRI = top_RI_entrez),
-                                     univ = u,
-                                     OrgDb = "org.Hs.eg.db",
-                                     fun = "enrichGO",
-                                     ont = .x))
+go_output <- map(ont, ~ compareCluster(
+    geneClusters = list(topRI = top_RI_entrez),
+    univ = u,
+    OrgDb = "org.Hs.eg.db",
+    fun = "enrichGO",
+    ont = .x
+))
 
 pdf(here(plot_dir, "explore", "go_all_top87.pdf"))
-map2(go_output, names(go_output), ~dotplot(.x, title = .y))
+map2(go_output, names(go_output), ~ dotplot(.x, title = .y))
 dev.off()
 
-save(go_output, file = here("processed-data", "01_find_tregs","enrichGO.Rdata"))
+save(go_output, file = here("processed-data", "01_find_tregs", "enrichGO.Rdata"))
 
-go_df <- map2(go_output, names(go_output), ~as.data.frame(.x) %>% mutate(ont = .y))
+go_df <- map2(go_output, names(go_output), ~ as.data.frame(.x) %>% mutate(ont = .y))
 go_df_all <- do.call("rbind", go_df) %>%
     as_tibble() %>%
     separate(GeneRatio, into = c("n1", "n2"), sep = "/") %>%
-    mutate(GeneRatio = Count/as.integer(n2),
-           Cluster = paste0(Cluster, "\n(",n2,")"),
-           Description = gsub("\n$","",gsub('(.{1,20})(\\s|$)', '\\1\n', Description)))
+    mutate(
+        GeneRatio = Count / as.integer(n2),
+        Cluster = paste0(Cluster, "\n(", n2, ")"),
+        Description = gsub("\n$", "", gsub("(.{1,20})(\\s|$)", "\\1\n", Description))
+    )
 
 gg_dotplot <- go_df_all %>%
-    ggplot(aes(x = Cluster, y = Description, color = p.adjust, size = GeneRatio))  +
+    ggplot(aes(x = Cluster, y = Description, color = p.adjust, size = GeneRatio)) +
     geom_point() +
     facet_wrap(~ont, scales = "free") +
     scale_colour_gradient(low = "red", high = "blue") +
@@ -294,15 +302,15 @@ upset(fromList(gene_lists), order.by = "freq", nset = length(gene_lists))
 dev.off()
 
 
-## Mean ratio markers 
+## Mean ratio markers
 load("/dcl01/lieber/ajaffe/lab/deconvolution_bsp2/data/marker_stats_pan.v2.Rdata", verbose = TRUE)
 
 marker_stats <- marker_stats %>%
-    filter(rank_ratio <= 25) 
+    filter(rank_ratio <= 25)
 
 
 gene_metrics2 %>%
-    left_join(marker_stats %>% select(Symbol, cellType))  %>%
+    left_join(marker_stats %>% select(Symbol, cellType)) %>%
     count(`Gene Type`, cellType, PropZero_filter, !is.na(rank_invar))
 
 #         Gene Type cellType !is.na(rank_invar)     n
@@ -481,9 +489,9 @@ sessioninfo::session_info()
 # XVector                0.34.0   2021-10-26 [2] Bioconductor
 # yulab.utils            0.0.4    2021-10-09 [1] CRAN (R 4.1.2)
 # zlibbioc               1.40.0   2021-10-26 [2] Bioconductor
-# 
+#
 # [1] /users/lhuuki/R/4.1.x
 # [2] /jhpce/shared/jhpce/core/conda/miniconda3-4.6.14/envs/svnR-4.1.x/R/4.1.x/lib64/R/site-library
 # [3] /jhpce/shared/jhpce/core/conda/miniconda3-4.6.14/envs/svnR-4.1.x/R/4.1.x/lib64/R/library
-# 
+#
 # ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────

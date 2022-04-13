@@ -91,7 +91,7 @@ sum_data <- colData(sce_pan) %>%
         cellType.RNAscope = ordered(cellType.RNAscope, levels = c("Excit", "Inhib", "Oligo", "Other")),
         sum_adj = sum / sd(sum)
     ) %>%
-    mutate(label = "snRNA-seq")  ## adjust for beta calc
+    mutate(label = "snRNA-seq") ## adjust for beta calc
 
 sum_data_main <- sum_data %>%
     filter(cellType.RNAscope != "Other") %>%
@@ -112,10 +112,12 @@ sn_fit_main_adj <- lm(sum_adj ~ cellType.RNAscope, data = sum_data_main)
 slope_anno(sn_fit_main_adj, 2)
 # "-1.33 (-1.35,-1.31)"
 
-sn_beta_summary <- tibble(RI_gene = "snRNA-seq sum",
-                     beta = slope_anno(sn_fit_main, 2),
-                     sd = sd(sum_data$sum),
-                     beta_adj = slope_anno(sn_fit_main_adj, 2))
+sn_beta_summary <- tibble(
+    RI_gene = "snRNA-seq sum",
+    beta = slope_anno(sn_fit_main, 2),
+    sd = sd(sum_data$sum),
+    beta_adj = slope_anno(sn_fit_main_adj, 2)
+)
 
 ## sum over cell type boxplot
 sn_sum_boxplot <- sum_data %>%
@@ -128,10 +130,10 @@ sn_sum_boxplot <- sum_data %>%
 
 ggsave(sn_sum_boxplot, filename = here(plot_dir, "explore", "sn_sum_boxplot.png"))
 ## Supp figure 5
-ggsave(sn_sum_boxplot + 
-           theme(legend.position = "None", axis.text.x = element_text(angle = 90)) +
-           facet_wrap(~label),
-    filename = here(plot_dir, "supp_pdf", "S5a_sn_sum_boxplot.pdf"), height = 6, width = 3
+ggsave(sn_sum_boxplot +
+    theme(legend.position = "None", axis.text.x = element_text(angle = 90)) +
+    facet_wrap(~label),
+filename = here(plot_dir, "supp_pdf", "S5a_sn_sum_boxplot.pdf"), height = 6, width = 3
 )
 
 ## sum over cell type boxplot
@@ -184,11 +186,11 @@ nrow(halo_all)
 # [1] 1171800
 
 summary(rna_scope_summary$`Number cells`)
-# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# 80796   94528  101475   97691  102654  109130 
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+# 80796   94528  101475   97691  102654  109130
 
 summary(rna_scope_summary$`Number cells after filtering`)
-# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
 # 68202   88908   92794   91744   99864  106123
 
 #### Filter Bad Regions ####
@@ -373,10 +375,10 @@ puncta_beta <- halo_all %>%
 
 (beta_summary <- puncta_beta %>%
     select(RI_gene, beta))
-# RI_gene beta               
-# <chr>   <chr>              
+# RI_gene beta
+# <chr>   <chr>
 # 1 AKT3    -5.52 (-5.55,-5.49)
-# 2 ARID1B  -2.63 (-2.65,-2.6) 
+# 2 ARID1B  -2.63 (-2.65,-2.6)
 # 3 MALAT1  -1.22 (-1.24,-1.21)
 # 4 POLR2A  -3.49 (-3.51,-3.47)
 
@@ -388,49 +390,55 @@ puncta_sd <- halo_all %>%
 ## adjust for sd, summarize
 beta_summary <- puncta_beta %>%
     left_join(puncta_sd) %>%
-    mutate(estimate_adj = estimate/sd,
-           conf.low_adj = conf.low/sd,
-           conf.high_adj = conf.high/sd,
-           beta_adj = paste0(
-               round(estimate_adj, 2), " (",
-               round(conf.low_adj, 2), ",",
-               round(conf.high_adj, 2), ")"
-           )) %>%
+    mutate(
+        estimate_adj = estimate / sd,
+        conf.low_adj = conf.low / sd,
+        conf.high_adj = conf.high / sd,
+        beta_adj = paste0(
+            round(estimate_adj, 2), " (",
+            round(conf.low_adj, 2), ",",
+            round(conf.high_adj, 2), ")"
+        )
+    ) %>%
     select(RI_gene, beta, sd, beta_adj) %>%
     rbind(sn_beta_summary)
 
-# RI_gene       beta                                  sd beta_adj           
-# <chr>         <chr>                              <dbl> <chr>              
+# RI_gene       beta                                  sd beta_adj
+# <chr>         <chr>                              <dbl> <chr>
 # 1 AKT3          -5.52 (-5.55,-5.49)                 5.18 -1.07 (-1.07,-1.06)
 # 2 ARID1B        -2.63 (-2.65,-2.6)                  3.42 -0.77 (-0.77,-0.76)
-# 3 MALAT1        -1.22 (-1.24,-1.21)                 1.53 -0.8 (-0.81,-0.79) 
+# 3 MALAT1        -1.22 (-1.24,-1.21)                 1.53 -0.8 (-0.81,-0.79)
 # 4 POLR2A        -3.49 (-3.51,-3.47)                 3.34 -1.05 (-1.05,-1.04)
-# 5 snRNA-seq sum -21844.07 (-22172.45,-21515.68) 15561.   -1.33 (-1.35,-1.31) 
+# 5 snRNA-seq sum -21844.07 (-22172.45,-21515.68) 15561.   -1.33 (-1.35,-1.31)
 
 ## Add puncta data to beta table for Table 1
 
 puncta_summary <- prop_RI_summary %>%
     right_join(beta_summary) %>%
-    select(-sd_prop_RI) 
+    select(-sd_prop_RI)
 
 write_csv(puncta_summary, file = here("processed-data", "02_analyze_halo", "puncta_summary.csv"))
 
 ## Main fig 6
 n_puncta_boxplot <- halo_all %>%
-    filter(cell_type %in% c("Excit", "Inhib", "Oligo"),
-           RI_gene != "MALAT1") %>%
+    filter(
+        cell_type %in% c("Excit", "Inhib", "Oligo"),
+        RI_gene != "MALAT1"
+    ) %>%
     ggplot(aes(x = cell_type, fill = cell_type, y = n_puncta)) +
-    geom_boxplot()+
+    geom_boxplot() +
     # geom_jitter(size = 0.5, alpha = 0.1, color = "grey", height = .2)+
     # geom_boxplot(outlier.shape = NA) +
     facet_wrap(~RI_gene, scales = "free_x", nrow = 1) +
     scale_fill_manual(values = halo_colors2) +
     theme_bw() +
     labs(x = "Cell Type", y = "Number Puncta") +
-    theme(text = element_text(size = 15), 
-          legend.position = "none", 
-          axis.text.x = element_text(angle = 90),
-          strip.text.x = element_text(face="italic"))
+    theme(
+        text = element_text(size = 15),
+        legend.position = "none",
+        axis.text.x = element_text(angle = 90),
+        strip.text.x = element_text(face = "italic")
+    )
 
 ggsave(n_puncta_boxplot, filename = here(plot_dir, "main_pdf", "fig6_puncta_boxplot.pdf"), height = 6)
 
@@ -494,23 +502,28 @@ puncta_v_size <- halo_all %>%
 
 puncta_v_size_anno <- puncta_v_size %>%
     select(RI_gene, cell_type, estimate, std.error) %>%
-    mutate(anno = paste("beta ==", round(estimate, 3)
-                        # ,"\nse ==", formatC(std.error, format = "e", digits = 1)
-                        ))
+    mutate(anno = paste(
+        "beta ==", round(estimate, 3)
+        # ,"\nse ==", formatC(std.error, format = "e", digits = 1)
+    ))
 
 n_puncta_size_scatter <- halo_all %>%
     ggplot(aes(x = nucleus_area, y = n_puncta)) +
     geom_point(aes(color = cell_type), size = 0.2, alpha = 0.2) +
     geom_smooth(method = "lm", color = "black") +
-    geom_text(data = puncta_v_size_anno, aes(label = anno), parse = TRUE , x = 45, y = 45, size = 3) +
+    geom_text(data = puncta_v_size_anno, aes(label = anno), parse = TRUE, x = 45, y = 45, size = 3) +
     scale_color_manual(values = halo_colors) +
     facet_grid(RI_gene ~ cell_type) +
-    labs(x = bquote("Nucleus Area µm"^2), 
-         y = "Number of Puncta") +
+    labs(
+        x = bquote("Nucleus Area µm"^2),
+        y = "Number of Puncta"
+    ) +
     theme_bw() +
-    theme(text = element_text(size = 15), 
-          strip.text.y = element_text(face="italic"),
-          legend.position = "none")
+    theme(
+        text = element_text(size = 15),
+        strip.text.y = element_text(face = "italic"),
+        legend.position = "none"
+    )
 
 ggsave(n_puncta_size_scatter, filename = here(plot_dir, "explore", "puncta_size_scatter.png"), width = 9)
 ggsave(n_puncta_size_scatter, filename = here(plot_dir, "supp_pdf", "puncta_size_scatter.pdf"), width = 9)
@@ -542,25 +555,27 @@ ggsave(hex_mean_area, filename = here(plot_dir, "explore", "hex_mean_area.png"))
 ## check out AKT3 excit vs. oligo stats
 
 excit_v_oligo <- halo_all %>%
-    filter(RI_gene == "AKT3",
-           cell_type %in% c("Oligo",'Excit')) %>%
+    filter(
+        RI_gene == "AKT3",
+        cell_type %in% c("Oligo", "Excit")
+    ) %>%
     ungroup() %>%
-    lm(n_puncta ~ nucleus_area*cell_type, data = .)
+    lm(n_puncta ~ nucleus_area * cell_type, data = .)
 
 summary(excit_v_oligo)
 
 # Residuals:
-#     Min       1Q   Median       3Q      Max 
-# -14.5827  -1.1727  -0.1537   1.0630  19.1617 
-# 
+#     Min       1Q   Median       3Q      Max
+# -14.5827  -1.1727  -0.1537   1.0630  19.1617
+#
 # Coefficients:
-#                                    Estimate Std. Error t value Pr(>|t|)    
+#                                    Estimate Std. Error t value Pr(>|t|)
 #     (Intercept)                 -0.1491385  0.0237221  -6.287 3.25e-10 ***
 #     nucleus_area                 0.0510418  0.0005179  98.552  < 2e-16 ***
 #     cell_typeExcit               1.4416543  0.0308293  46.762  < 2e-16 ***
 #     nucleus_area:cell_typeExcit  0.0925428  0.0005941 155.767  < 2e-16 ***
 
-summary(excit_v_oligo)$coef[4,4]
+summary(excit_v_oligo)$coef[4, 4]
 
 #### Check out RI Expression by XY ####
 hex_ri <- halo_all %>%
@@ -609,9 +624,11 @@ hex_ri_mean <- halo_all %>%
     coord_equal() +
     scale_y_reverse() +
     theme(legend.position = "bottom") +
-    theme_bw()+
-    theme(text = element_text(size = 15), 
-          legend.position = "bottom")
+    theme_bw() +
+    theme(
+        text = element_text(size = 15),
+        legend.position = "bottom"
+    )
 
 ggsave(hex_ri_mean, filename = here(plot_dir, "explore", "hex_mean_puncta.png"), width = 10)
 ggsave(hex_ri_mean, filename = here(plot_dir, "supp_pdf", "S5_hex_mean_puncta.pdf"), width = 10)
