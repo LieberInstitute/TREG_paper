@@ -5,6 +5,7 @@ library("jaffelab")
 library("here")
 library("sessioninfo")
 library("GGally")
+library("UpSetR")
 
 ## Load data
 plot_dir <- "plots/01_find_tregs"
@@ -46,6 +47,17 @@ region_propZero <- map2(splitit(sce_pan$region), levels(sce_pan$region), functio
     return(gene_propZero)
 })
 
+# Region: AMY, n_nuc = 14006
+# Median Express: 0.047, n_gene = 11519
+# Region: DLPFC, n_nuc = 11202
+# Median Express: 0.053, n_gene = 11519
+# Region: HPC, n_nuc = 10104
+# Median Express: 0.047, n_gene = 11519
+# Region: NAc, n_nuc = 19892
+# Median Express: 0.059, n_gene = 11519
+# Region: sACC, n_nuc = 15323
+# Median Express: 0.053, n_gene = 11519
+
 ## Plot Prop Zero densities
 pdf(here(plot_dir, "supp_pdf", "region_propZero_density.pdf"), width = 10)
 map2(region_propZero, names(region_propZero), function(propZero, region_name) {
@@ -78,11 +90,8 @@ map2(region_propZero, names(region_propZero), function(propZero, region_name) {
 dev.off()
 
 #### Calc RI build gene metrics for each region ####
-gene_metrics_blank <- rowData(sce_pan) %>%
-    as.data.frame() %>%
-    select(Symbol = gene_name, ensembl_id = gene_id)
 
-gene_metrics_region <- map2(region_propZero[1], splitit(sce_pan$region)[1], function(propZero, region_i) {
+gene_metrics_region <- map2(region_propZero, splitit(sce_pan$region), function(propZero, region_i) {
     ## Annotate top 50% genes
     gene_metrics_r <- gene_metrics_blank
     gene_metrics_r$top50 <- gene_metrics_r$ensembl_id %in% rownames(propZero)
@@ -96,35 +105,55 @@ gene_metrics_region <- map2(region_propZero[1], splitit(sce_pan$region)[1], func
     ## filter by Proportion Zero
     propZero_limit <- 0.75
     genes_filtered <- filter_prop_zero(propZero, cutoff = propZero_limit)
-    return(genes_filtered)
+    # return(genes_filtered)
     message("filter to: ", length(genes_filtered))
 
     sce_pan_temp <- sce_pan[genes_filtered, ]
     sce_pan_temp <- sce_pan_temp[, region_i]
-    message(str(dim(sce_pan)))
-    # [1]   877 70527
-    #
-    # gene_metrics$PropZero_filter <- gene_metrics$ensembl_id %in% rownames(sce_pan)
-    #
-    # #### Run Rank Invariance for full data set ####
-    # assays(sce_pan)$logcounts <- as.matrix(assays(sce_pan)$logcounts)
-    #
-    # rank_invariance <- rank_invariance_express(sce_pan, group_col = "cellType.Broad")
-    #
-    # rank_invar_df <- as.data.frame(rank_invariance)
-    # colnames(rank_invar_df) <- "rank_invar"
-    #
-    # ## add to gene metrics
-    # gene_metrics <- gene_metrics %>%
-    #   left_join(rank_invar_df %>%
-    #               rownames_to_column("ensembl_id"))
-    #
-    # head(gene_metrics)
+    message(str(dim(sce_pan_temp)))
+
+    gene_metrics_r$PropZero_filter <- gene_metrics_r$ensembl_id %in% genes_filtered
+
+    #### Run Rank Invariance for full data set ####
+    assays(sce_pan_temp)$logcounts <- as.matrix(assays(sce_pan_temp)$logcounts)
+
+    rank_invariance <- rank_invariance_express(sce_pan_temp, group_col = "cellType.Broad")
+
+    rank_invar_df <- as.data.frame(rank_invariance)
+    colnames(rank_invar_df) <- "rank_invar"
+
+    ## add to gene metrics
+    gene_metrics_r <- gene_metrics_r %>%
+      left_join(rank_invar_df %>%
+                  rownames_to_column("ensembl_id"),  by = "ensembl_id")
 
     return(gene_metrics_r)
 })
 
+gene_metrics_all <- c(list(ALL = gene_metrics), gene_metrics_region)
 
+map(gene_metrics_region, ~.x %>% arrange(-rank_invar) %>% head())
+map(gene_metrics_region, ~.x %>% mutate(r = sum(!is.na(.x$rank_invar)) - rank_invar + 1) %>%filter(Symbol %in% c("MALAT1", "AKT3", "ARID1B")))
+
+## get top 10% of RI genes, make upset plots
+top_ri <- map(gene_metrics_region, ~.x %>% 
+                     arrange(-rank_invar) %>%
+                     # head(.x %>% 
+                     #          filter(!is.na(rank_invar)) %>%
+                     #          nrow()%/%10) %>%
+                     head(40) %>%
+                     pull(Symbol))
+
+
+pdf(here(plot_dir, "supp_pdf", "upset_region_top_ri.pdf"))
+upset(fromList(top_ri), order.by = "freq")
+dev.off()
+
+Reduce(intersect, top_ri)
+# [1] "MALAT1"     "MACF1"      "AKT3"       "TNRC6B"     "JMJD1C"     "FTX"        "AC016831.7" "ZFAND3"    
+# [9] "ARID1B"     "KMT2C"      "RERE"       "KANSL1"     "MED13L" 
+
+head(gene_metrics_region[[1]])
 ## filter to 877 Prop Zero genes
 gene_set <- gene_metrics$ensembl_id[gene_metrics$PropZero_filter]
 length(gene_set)
