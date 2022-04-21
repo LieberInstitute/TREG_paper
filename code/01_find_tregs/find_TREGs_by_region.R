@@ -131,27 +131,28 @@ gene_metrics_region <- map2(region_propZero, splitit(sce_pan$region), function(p
 })
 
 gene_metrics_all <- c(list(ALL = gene_metrics), gene_metrics_region)
+names(gene_metrics_all)
 
-map(gene_metrics_region, ~.x %>% arrange(-rank_invar) %>% head())
-map(gene_metrics_region, ~.x %>% mutate(r = sum(!is.na(.x$rank_invar)) - rank_invar + 1) %>%filter(Symbol %in% c("MALAT1", "AKT3", "ARID1B")))
+map(gene_metrics_all, ~.x %>% arrange(-rank_invar) %>% head())
+map(gene_metrics_all, ~.x %>% mutate(r = sum(!is.na(.x$rank_invar)) - rank_invar + 1) %>%filter(Symbol %in% c("MALAT1", "AKT3", "ARID1B")))
 
 ## get top 10% of RI genes, make upset plots
-top_ri <- map(gene_metrics_region, ~.x %>% 
+top_ri <- map(gene_metrics_all, ~.x %>% 
                      arrange(-rank_invar) %>%
                      # head(.x %>% 
                      #          filter(!is.na(rank_invar)) %>%
                      #          nrow()%/%10) %>%
-                     head(40) %>%
+                     head(50) %>%
                      pull(Symbol))
 
 
 pdf(here(plot_dir, "supp_pdf", "upset_region_top_ri.pdf"))
-upset(fromList(top_ri), order.by = "freq")
+upset(fromList(top_ri), order.by = "freq", nset = 6)
 dev.off()
 
 Reduce(intersect, top_ri)
-# [1] "MALAT1"     "MACF1"      "AKT3"       "TNRC6B"     "JMJD1C"     "FTX"        "AC016831.7" "ZFAND3"    
-# [9] "ARID1B"     "KMT2C"      "RERE"       "KANSL1"     "MED13L" 
+# [1] "MALAT1"     "JMJD1C"     "FTX"        "MACF1"      "AKT3"       "TNRC6B"     "AC016831.7" "ZFAND3"    
+# [9] "ARID1B"     "RERE"       "KANSL1"     "KMT2C"      "MED13L" 
 
 head(gene_metrics_region[[1]])
 ## filter to 877 Prop Zero genes
