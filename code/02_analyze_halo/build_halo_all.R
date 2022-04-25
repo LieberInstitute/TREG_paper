@@ -228,6 +228,27 @@ qc_plot_filtered <- ggplot() +
 
 ggsave(qc_plot_filtered, filename = here(plot_dir, "explore", "mean_area_qc_grid_filter.png"), width = 10)
 
+#### Sample Shapes ####
+walk(c("ARID1B","AKT3","MALAT1"), function(gene){
+    message(gene)
+    hex_n_cells <- halo_all %>%
+        filter(RI_gene == gene) %>% ## Remove duplicate data & normal nuclei
+        ggplot() +
+        geom_hex(aes(x = XMax, y = YMax), bins = 200) +
+        scale_fill_gradientn(colours = c("#F9C18B", "white", "white", "white"), breaks = c(15,30)) +
+        # facet_wrap(~GeneTarget) +
+        coord_equal() +
+        scale_y_reverse() + 
+        theme_void() +
+        theme(panel.background = element_rect(fill = "transparent",colour = NA),
+            plot.background = element_rect(fill = "transparent",colour = NA),
+            legend.position = "None"
+        )
+    
+    ggsave(hex_n_cells, filename = here(plot_dir, "explore", paste0("hex_n_cells_void-",gene,".png")))
+    
+})
+
 #### QC box plots ####
 ## nucleus area
 halo_all %>%

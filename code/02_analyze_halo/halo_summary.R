@@ -703,3 +703,22 @@ halo_a1_cell_type <- halo_a1 %>%
 
 # ggsave(halo_a1_cell_type, filename = here("plots","HK_gene","main_figs","fig5_halo_cell_types.png"),width = 8, height = 3)
 ggsave(halo_a1_cell_type, filename = here(plot_dir, "main_pdf", "fig5_halo_cell_types.pdf"), width = 8, height = 3)
+
+
+mbp_hex <- halo_all %>%
+    filter(RI_gene != "POLR2A",
+           MBP == 1) %>%
+    ggplot(aes(x = XMax, y = YMax)) +
+    geom_hex(bins = 100) +
+    scale_fill_continuous(type = "viridis", name =  "n nuclei expressing MBP") +
+    facet_wrap(~GeneTarget, nrow = 1) +
+    coord_equal() +
+    scale_y_reverse() +
+    theme_bw() +
+    theme(
+        text = element_text(size = 15),
+        legend.position = "bottom"
+    ) +
+    blank_axis
+
+ggsave(mbp_hex, filename = here(plot_dir, "supp_pdf", "hex_MBP.pdf"))
