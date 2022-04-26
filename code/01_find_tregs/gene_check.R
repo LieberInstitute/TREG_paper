@@ -112,7 +112,8 @@ invar_t_scatter <- gene_metrics3 %>%
     theme_bw() +
     facet_wrap(~gene_anno) +
     labs(x = "Rank Invariance", y = "Total RNA t-statistic") +
-    theme(text = element_text(size = 15))
+    theme(text = element_text(size = 15)) +
+    geom_smooth(fill = "lightpink", span = 0.3)
 
 ggsave(invar_t_scatter, filename = here(plot_dir, "explore", "rank_invar_t_scatter.png"), width = 6)
 ggsave(invar_t_scatter, filename = here(plot_dir, "supp_pdf", "rank_invar_t_scatter.pdf"), width = 6)
