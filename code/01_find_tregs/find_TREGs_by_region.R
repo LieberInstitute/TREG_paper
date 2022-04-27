@@ -156,7 +156,19 @@ top_ri <- map(gene_metrics_all, ~.x %>%
 
 
 pdf(here(plot_dir, "supp_pdf", "upset_region_top_ri.pdf"))
-upset(fromList(top_ri), order.by = "freq", nset = 6)
+upset(
+    fromList(top_ri),
+    order.by = "freq",
+    nset = 6,
+    queries = list(
+        list(
+            query = intersects,
+            params = as.list(names(top_ri)),
+            color = "orange",
+            active = TRUE
+        )
+    )
+)
 dev.off()
 
 Reduce(intersect, top_ri)
