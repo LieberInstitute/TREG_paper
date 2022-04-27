@@ -90,6 +90,9 @@ map2(region_propZero, names(region_propZero), function(propZero, region_name) {
 dev.off()
 
 #### Calc RI build gene metrics for each region ####
+gene_metrics_blank <- gene_metrics[,c("Symbol", "ensembl_id")]
+rownames(gene_metrics_blank) <- gene_metrics$ensembl_id
+head(gene_metrics_blank)
 
 gene_metrics_region <- map2(region_propZero, splitit(sce_pan$region), function(propZero, region_i) {
     ## Annotate top 50% genes
@@ -130,8 +133,14 @@ gene_metrics_region <- map2(region_propZero, splitit(sce_pan$region), function(p
     return(gene_metrics_r)
 })
 
+# [1] 23038
+map_int(gene_metrics_region, nrow)
+
+## combine with ALL
 gene_metrics_all <- c(list(ALL = gene_metrics), gene_metrics_region)
 names(gene_metrics_all)
+save(gene_metrics_all, file = here("processed-data", "01_find_tregs","gene_metrics_all_region.Rdata"))
+
 
 map(gene_metrics_all, ~.x %>% arrange(-rank_invar) %>% head())
 map(gene_metrics_all, ~.x %>% mutate(r = sum(!is.na(.x$rank_invar)) - rank_invar + 1) %>%filter(Symbol %in% c("MALAT1", "AKT3", "ARID1B")))
@@ -155,7 +164,23 @@ Reduce(intersect, top_ri)
 # [9] "ARID1B"     "RERE"       "KANSL1"     "KMT2C"      "MED13L" 
 
 head(gene_metrics_region[[1]])
-## filter to 877 Prop Zero genes
+
+##make a big table add region name to all col names
+gene_metrics_region_noGene <- map2(gene_metrics_all, names(gene_metrics_all), 
+                                  ~.x %>% 
+                                    select(-Symbol, -ensembl_id)
+                                  )
+
+gene_metrics_region_combo_t <- do.call("cbind", c(gene_metrics_blank, gene_metrics_region_noGene))
+head(gene_metrics_region_combo_t)
+
+write.csv(gene_metrics_region_combo_t, file = here("processed-data", "01_find_tregs", "supp_tables", "gene_metrics_ALLregions.csv"))
+
+## Check  TREGs
+gene_metrics_region_combo_t %>% filter(Symbol %in% c("MALAT1", "AKT3", "ARID1B"))
+
+#### Universal Filtering ####
+##filter to 877 Prop Zero genes
 gene_set <- gene_metrics$ensembl_id[gene_metrics$PropZero_filter]
 length(gene_set)
 # [1] 877
