@@ -20,8 +20,8 @@ write.xlsx(as.data.frame(st1_edit), file = supp_xlxs, sheetName = "Supp Table 1"
            col.names = TRUE, row.names = FALSE, append = FALSE)
 
 ## Supplementary Table 2: Detailed gene metrics
-st2 <- read_csv(here("processed-data","01_find_tregs","supp_tables", "gene_metrics2.csv")) %>%
-  select(-1)
+st2 <- read.csv(here("processed-data","01_find_tregs","supp_tables", "gene_metrics2.csv"), row.names = 1) %>%
+  select(ensembl_id, Symbol, Gene.Type, t)
 
 write.xlsx(as.data.frame(st2), file = supp_xlxs, sheetName = "Supp Table 2", 
            col.names = TRUE, row.names = FALSE, append = TRUE)
