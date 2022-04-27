@@ -125,7 +125,8 @@ propZero_density_rare <- gene_propZero_long %>%
     theme_bw() +
     theme(legend.position = "none", text = element_text(size = 15), axis.text.x = element_text(angle = 90, hjust = 1))
 
-ggsave(propZero_density_rare, filename = here(plot_dir, "supp_pdf", "fig_supp_propZero_density_rare_ct.png"), width = 7, height = 2)
+# ggsave(propZero_density_rare, filename = here(plot_dir, "supp_pdf", "fig_supp_propZero_density_rare_ct.png"), width = 7, height = 2)
+ggsave(propZero_density_rare, filename = here(plot_dir, "supp_pdf", "fig_supp_propZero_density_rare_ct.pdf"), width = 7, height = 2)
 
 ## filter
 # sce_pan <- sce_pan[genes_filtered,]
@@ -310,11 +311,13 @@ counts_long <- as.data.frame(hk_counts) %>%
     pivot_longer(!gene, names_to = "ID", values_to = "logcount") %>%
     left_join(pd %>% rownames_to_column("ID") %>% select(ID, cellType.Broad, sum)) %>%
     mutate(logsum = log2(sum)) %>%
-    left_join(genes_of_interest) %>%
-    left_join(invar_t %>% select(gene = ensembl_id, t, adj.P.Val))
+    left_join(genes_of_interest) 
+
+# %>%
+#     left_join(invar_t %>% select(gene = ensembl_id, t, adj.P.Val))
 
 counts_long$Symbol <- factor(counts_long$Symbol)
-counts_long$Symbol <- fct_reorder(counts_long$Symbol, counts_long$t, max)
+# counts_long$Symbol <- fct_reorder(counts_long$Symbol, counts_long$t, max)
 levels(counts_long$Symbol)
 
 model_anno <- invar_t %>%
@@ -364,6 +367,27 @@ hk_sum_scatter_main <- counts_long %>%
 
 # ggsave(hk_sum_scatter_main, filename = here("plots","01_find_tregs","main_pdf","fig3_hk_sum_scatter_MALAT1.png"), width = 4.5, height = 5)
 ggsave(hk_sum_scatter_main, filename = here(plot_dir, "main_pdf", "fig3_hk_sum_scatter_MALAT1.pdf"), width = 4.5, height = 5)
+
+
+## Supp fig other gene full scatter
+hk_sum_scatter_main <- counts_long %>%
+    filter(Symbol %in% c("AKT3", "ARID1B","POLR2A")) %>%
+    ggplot(aes(logsum, logcount, color = cellType.Broad)) +
+    geom_point(alpha = 0.5, size = 0.5) +
+    geom_smooth(method = "lm") +
+    scale_color_manual(values = cell_colors) +
+    facet_wrap(~Symbol, nrow = 1) +
+    theme_bw() +
+    coord_equal() +
+    labs(x = "log2(sum)", y = "log2(count + 1)") +
+    theme(
+        legend.position = "None",
+        text = element_text(size = 15),
+        strip.text.x = element_text(face = "italic")
+    )
+
+ggsave(hk_sum_scatter_main, filename = here(plot_dir, "supp_pdf", "hk_sum_scatter_other_genes.pdf"),width = 9, height = 4)
+ggsave(hk_sum_scatter_main, filename = here(plot_dir, "supp_pdf", "hk_sum_scatter_other_genes.png"),width = 9, height = 4)
 
 
 hk_sum_smooth2 <- counts_long %>%
