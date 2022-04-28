@@ -311,7 +311,7 @@ counts_long <- as.data.frame(hk_counts) %>%
     pivot_longer(!gene, names_to = "ID", values_to = "logcount") %>%
     left_join(pd %>% rownames_to_column("ID") %>% select(ID, cellType.Broad, sum)) %>%
     mutate(logsum = log2(sum)) %>%
-    left_join(genes_of_interest) 
+    left_join(genes_of_interest)
 
 # %>%
 #     left_join(invar_t %>% select(gene = ensembl_id, t, adj.P.Val))
@@ -371,7 +371,7 @@ ggsave(hk_sum_scatter_main, filename = here(plot_dir, "main_pdf", "fig3_hk_sum_s
 
 ## Supp fig other gene full scatter
 hk_sum_scatter_main <- counts_long %>%
-    filter(Symbol %in% c("AKT3", "ARID1B","POLR2A")) %>%
+    filter(Symbol %in% c("AKT3", "ARID1B", "POLR2A")) %>%
     ggplot(aes(logsum, logcount, color = cellType.Broad)) +
     geom_point(alpha = 0.5, size = 0.5) +
     geom_smooth(method = "lm") +
@@ -386,8 +386,8 @@ hk_sum_scatter_main <- counts_long %>%
         strip.text.x = element_text(face = "italic")
     )
 
-ggsave(hk_sum_scatter_main, filename = here(plot_dir, "supp_pdf", "hk_sum_scatter_other_genes.pdf"),width = 9, height = 4)
-ggsave(hk_sum_scatter_main, filename = here(plot_dir, "supp_pdf", "hk_sum_scatter_other_genes.png"),width = 9, height = 4)
+ggsave(hk_sum_scatter_main, filename = here(plot_dir, "supp_pdf", "hk_sum_scatter_other_genes.pdf"), width = 9, height = 4)
+ggsave(hk_sum_scatter_main, filename = here(plot_dir, "supp_pdf", "hk_sum_scatter_other_genes.png"), width = 9, height = 4)
 
 
 hk_sum_smooth2 <- counts_long %>%

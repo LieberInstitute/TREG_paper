@@ -706,11 +706,13 @@ ggsave(halo_a1_cell_type, filename = here(plot_dir, "main_pdf", "fig5_halo_cell_
 
 
 mbp_hex <- halo_all %>%
-    filter(RI_gene != "POLR2A",
-           MBP == 1) %>%
+    filter(
+        RI_gene != "POLR2A",
+        MBP == 1
+    ) %>%
     ggplot(aes(x = XMax, y = YMax)) +
     geom_hex(bins = 100) +
-    scale_fill_continuous(type = "viridis", name =  "n nuclei expressing MBP") +
+    scale_fill_continuous(type = "viridis", name = "n nuclei expressing MBP") +
     facet_wrap(~GeneTarget, nrow = 1) +
     coord_equal() +
     scale_y_reverse() +
