@@ -528,6 +528,29 @@ n_puncta_size_scatter <- halo_all %>%
 ggsave(n_puncta_size_scatter, filename = here(plot_dir, "explore", "puncta_size_scatter.png"), width = 9)
 ggsave(n_puncta_size_scatter, filename = here(plot_dir, "supp_pdf", "puncta_size_scatter.pdf"), width = 9)
 
+n_puncta_size_scatter_poster <- halo_all %>%
+    filter(cell_type %in% c("Oligo", "Excit","Inhib")) %>%
+    ggplot(aes(x = nucleus_area, y = n_puncta)) +
+    geom_point(aes(color = cell_type), size = 0.2, alpha = 0.2) +
+    geom_smooth(method = "lm", color = "black") +
+    geom_text(data = puncta_v_size_anno %>%
+                  filter(cell_type %in% c("Oligo", "Excit","Inhib")) ,
+              aes(label = anno), parse = TRUE, x = 45, y = 45, size = 3) +
+    scale_color_manual(values = halo_colors) +
+    facet_grid(RI_gene ~ cell_type) +
+    labs(
+        x = bquote("Nucleus Area µm"^2),
+        y = "Number of Puncta"
+    ) +
+    theme_bw() +
+    theme(
+        text = element_text(size = 15),
+        strip.text.y = element_text(face = "italic"),
+        legend.position = "none"
+    )
+
+ggsave(n_puncta_size_scatter_poster, filename = here(plot_dir, "explore", "puncta_size_scatter_poster.png"), width = 5.5)
+
 #### Spatial ####
 hex_n_cells <- halo_all %>%
     filter(RI_gene != "POLR2A") %>% ## Remove duplicate data & normal nuclei
