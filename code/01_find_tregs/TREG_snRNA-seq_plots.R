@@ -207,7 +207,7 @@ rank_violin_ct <- ggplot(rank_long, aes(x = cellType.Broad, y = rank, fill = cel
     theme_bw() +
     theme(
         text = element_text(size = 15),
-        legend.position = "none",
+        # legend.position = "none",
         axis.text.x = element_text(angle = 90, hjust = 1),
         strip.text.x = element_text(face = "italic")
     )
