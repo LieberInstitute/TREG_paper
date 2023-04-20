@@ -6,46 +6,37 @@ Loading LIBD module for rmate/1.5.9
 Loading LIBD module for ruby/2.6.4p104
 Loading conda_R/4.3
 **** Job starts ****
-Wed Apr 19 15:44:22 EDT 2023
+Thu Apr 20 15:03:54 EDT 2023
 **** JHPCE info ****
 User: lhuuki
-Job id: 3129260
+Job id: 3130567
 Job name: TREG_snRNA-seq_plots
-Hostname: compute-095.cm.cluster
+Hostname: compute-098.cm.cluster
 Task id: undefined
 Unloading conda_R/4.3
-Lmod has detected the following error: The following module(s) are unknown:
-"conda_R/4/1/x"
+Loading conda_R/4.1.x
 
-Please check the spelling or version number. Also try "module spider ..."
-It is also possible your cache file is out-of-date; it may help to try:
-  $ module --ignore-cache load "conda_R/4/1/x"
-
-Also make sure that all modulefiles written in TCL start with the string
-#%Module
-
-
+The following have been reloaded with a version change:
+  1) conda/3-4.11.0 => conda/3-4.6.14     2) conda_R/4.3 => conda_R/4.1.x
 
 
 Currently Loaded Modules:
   1) matlab/R2019a     6) COMMUNITY_CENTOS7_DEFAULT_ENV  11) ruby/2.6.4p104
   2) stata/17          7) JHPCE_CENTOS7_DEFAULT_ENV      12) rmate/1.5.9
-  3) JHPCE_tools/1.0   8) git-status-size/github         13) conda/3-4.11.0
-  4) sge/8.1.9         9) git/2.28.0                     14) conda_R/4.3
+  3) JHPCE_tools/1.0   8) git-status-size/github         13) conda/3-4.6.14
+  4) sge/8.1.9         9) git/2.28.0                     14) conda_R/4.1.x
   5) gcc/4.4.7        10) git-lfs/2.8.0
 
  
 
-── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-✔ dplyr     1.1.1     ✔ readr     2.1.4
-✔ forcats   1.0.0     ✔ stringr   1.5.0
-✔ ggplot2   3.4.2     ✔ tibble    3.2.1
-✔ lubridate 1.9.2     ✔ tidyr     1.3.0
-✔ purrr     1.0.1     
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
+✔ ggplot2 3.3.6      ✔ purrr   0.3.4 
+✔ tibble  3.1.8      ✔ dplyr   1.0.10
+✔ tidyr   1.2.0      ✔ stringr 1.4.1 
+✔ readr   2.1.2      ✔ forcats 0.5.2 
 ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ✖ dplyr::filter() masks stats::filter()
 ✖ dplyr::lag()    masks stats::lag()
-ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 Loading required package: SummarizedExperiment
 Loading required package: MatrixGenerics
 Loading required package: matrixStats
@@ -83,10 +74,6 @@ Loading required package: BiocGenerics
 
 Attaching package: ‘BiocGenerics’
 
-The following objects are masked from ‘package:lubridate’:
-
-    intersect, setdiff, union
-
 The following objects are masked from ‘package:dplyr’:
 
     combine, intersect, setdiff, union
@@ -97,20 +84,16 @@ The following objects are masked from ‘package:stats’:
 
 The following objects are masked from ‘package:base’:
 
-    anyDuplicated, aperm, append, as.data.frame, basename, cbind,
-    colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
-    get, grep, grepl, intersect, is.unsorted, lapply, Map, mapply,
-    match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
-    Position, rank, rbind, Reduce, rownames, sapply, setdiff, sort,
-    table, tapply, union, unique, unsplit, which.max, which.min
+    anyDuplicated, append, as.data.frame, basename, cbind, colnames,
+    dirname, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, Map, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply,
+    union, unique, unsplit, which.max, which.min
 
 Loading required package: S4Vectors
 
 Attaching package: ‘S4Vectors’
-
-The following objects are masked from ‘package:lubridate’:
-
-    second, second<-
 
 The following objects are masked from ‘package:dplyr’:
 
@@ -120,10 +103,6 @@ The following object is masked from ‘package:tidyr’:
 
     expand
 
-The following object is masked from ‘package:utils’:
-
-    findMatches
-
 The following objects are masked from ‘package:base’:
 
     expand.grid, I, unname
@@ -131,10 +110,6 @@ The following objects are masked from ‘package:base’:
 Loading required package: IRanges
 
 Attaching package: ‘IRanges’
-
-The following object is masked from ‘package:lubridate’:
-
-    %within%
 
 The following objects are masked from ‘package:dplyr’:
 
@@ -186,11 +161,8 @@ ENSG00000117020 ENSG00000117020   AKT3
 ENSG00000049618 ENSG00000049618 ARID1B
 ENSG00000251562 ENSG00000251562 MALAT1
 ENSG00000181222 ENSG00000181222 POLR2A
-Joining with `by = join_by(Symbol)`
-Warning message:
-Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
-ℹ Please use `linewidth` instead. 
-Joining with `by = join_by(gene)`
+Joining, by = "Symbol"
+Joining, by = "gene"
 Loading objects:
   rank_df_subset
 [1]     4 70527
@@ -209,19 +181,215 @@ ENSG00000117020                       22956.5                       22784.0
 ENSG00000049618                       22988.5                       21207.0
 ENSG00000251562                       23038.0                       23038.0
 ENSG00000181222                       10780.0                       10253.5
-Joining with `by = join_by(gene)`
-Joining with `by = join_by(Sample)`
-Joining with `by = join_by(uniqueID)`
-Joining with `by = join_by(gene)`
-Joining with `by = join_by(uniqueID)`
-Joining with `by = join_by(gene)`
-Joining with `by = join_by(ID)`
-Joining with `by = join_by(gene)`
- [1] "ACTB"    "AKT3"    "AMZ2"    "ARID1B"  "BHLHE22" "BIN1"    "CPLX2"  
- [8] "GAPDH"   "GSTO1"   "HPRT1"   "LDHA"    "MALAT1"  "NDUFA3"  "NDUFB1" 
-[15] "NDUFB4"  "PGK1"    "POLR2A"  "POLR2I"  "POMP"    "PPIB"    "RRAGA"  
-[22] "TUBB3"   "UBC"    
-Error: object 'invar_t' not found
-Execution halted
+Joining, by = "gene"
+Joining, by = "Sample"
+Joining, by = "uniqueID"
+Joining, by = "gene"
+Joining, by = "uniqueID"
+Joining, by = "gene"
+Loading objects:
+  tt
+Joining, by = "gene"
+Joining, by = "ID"
+Joining, by = "gene"
+ [1] "MALAT1"  "ARID1B"  "AKT3"    "HPRT1"   "BIN1"    "ACTB"    "POLR2A" 
+ [8] "PGK1"    "GAPDH"   "CPLX2"   "NDUFB1"  "POMP"    "NDUFB4"  "UBC"    
+[15] "GSTO1"   "PPIB"    "AMZ2"    "LDHA"    "NDUFA3"  "RRAGA"   "POLR2I" 
+[22] "TUBB3"   "BHLHE22"
+`geom_smooth()` using formula 'y ~ x'
+`geom_smooth()` using formula 'y ~ x'
+`geom_smooth()` using formula 'y ~ x'
+`geom_smooth()` using formula 'y ~ x'
+`geom_smooth()` using formula 'y ~ x'
+`geom_smooth()` using formula 'y ~ x'
+`geom_smooth()` using formula 'y ~ x'
+`geom_smooth()` using formula 'y ~ x'
+Saving 11 x 7 in image
+`geom_smooth()` using formula 'y ~ x'
+MALAT1
+`geom_smooth()` using formula 'y ~ x'
+ARID1B
+`geom_smooth()` using formula 'y ~ x'
+AKT3
+`geom_smooth()` using formula 'y ~ x'
+HPRT1
+`geom_smooth()` using formula 'y ~ x'
+BIN1
+`geom_smooth()` using formula 'y ~ x'
+ACTB
+`geom_smooth()` using formula 'y ~ x'
+POLR2A
+`geom_smooth()` using formula 'y ~ x'
+PGK1
+`geom_smooth()` using formula 'y ~ x'
+GAPDH
+`geom_smooth()` using formula 'y ~ x'
+CPLX2
+`geom_smooth()` using formula 'y ~ x'
+NDUFB1
+`geom_smooth()` using formula 'y ~ x'
+POMP
+`geom_smooth()` using formula 'y ~ x'
+NDUFB4
+`geom_smooth()` using formula 'y ~ x'
+UBC
+`geom_smooth()` using formula 'y ~ x'
+GSTO1
+`geom_smooth()` using formula 'y ~ x'
+PPIB
+`geom_smooth()` using formula 'y ~ x'
+AMZ2
+`geom_smooth()` using formula 'y ~ x'
+LDHA
+`geom_smooth()` using formula 'y ~ x'
+NDUFA3
+`geom_smooth()` using formula 'y ~ x'
+RRAGA
+`geom_smooth()` using formula 'y ~ x'
+POLR2I
+`geom_smooth()` using formula 'y ~ x'
+TUBB3
+`geom_smooth()` using formula 'y ~ x'
+BHLHE22
+`geom_smooth()` using formula 'y ~ x'
+null device 
+          1 
+[1] "Reproducibility information:"
+[1] "2023-04-20 15:09:37 EDT"
+   user  system elapsed 
+326.328   7.868 341.348 
+─ Session info ───────────────────────────────────────────────────────────────────────────────────────────────────────
+ setting  value
+ version  R version 4.1.2 Patched (2021-11-04 r81138)
+ os       CentOS Linux 7 (Core)
+ system   x86_64, linux-gnu
+ ui       X11
+ language (EN)
+ collate  en_US.UTF-8
+ ctype    en_US.UTF-8
+ tz       US/Eastern
+ date     2023-04-20
+ pandoc   2.13 @ /jhpce/shared/jhpce/core/conda/miniconda3-4.6.14/envs/svnR-4.1.x/bin/pandoc
+
+─ Packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ package              * version  date (UTC) lib source
+ assertthat             0.2.1    2019-03-21 [2] CRAN (R 4.1.0)
+ backports              1.4.1    2021-12-13 [2] CRAN (R 4.1.2)
+ beachmat               2.10.0   2021-10-26 [2] Bioconductor
+ beeswarm               0.4.0    2021-06-01 [2] CRAN (R 4.1.2)
+ Biobase              * 2.54.0   2021-10-26 [2] Bioconductor
+ BiocGenerics         * 0.40.0   2021-10-26 [2] Bioconductor
+ BiocNeighbors          1.12.0   2021-10-26 [2] Bioconductor
+ BiocParallel           1.28.3   2021-12-09 [2] Bioconductor
+ BiocSingular           1.10.0   2021-10-26 [2] Bioconductor
+ bitops                 1.0-7    2021-04-24 [2] CRAN (R 4.1.0)
+ broom                  1.0.1    2022-08-29 [2] CRAN (R 4.1.2)
+ cellranger             1.1.0    2016-07-27 [2] CRAN (R 4.1.0)
+ cli                    3.3.0    2022-04-25 [2] CRAN (R 4.1.2)
+ colorspace             2.0-3    2022-02-21 [2] CRAN (R 4.1.2)
+ crayon                 1.5.1    2022-03-26 [2] CRAN (R 4.1.2)
+ DBI                    1.1.3    2022-06-18 [2] CRAN (R 4.1.2)
+ dbplyr                 2.2.1    2022-06-27 [2] CRAN (R 4.1.2)
+ DelayedArray           0.20.0   2021-10-26 [2] Bioconductor
+ DelayedMatrixStats     1.16.0   2021-10-26 [2] Bioconductor
+ digest                 0.6.29   2021-12-01 [2] CRAN (R 4.1.2)
+ dplyr                * 1.0.10   2022-09-01 [2] CRAN (R 4.1.2)
+ ellipsis               0.3.2    2021-04-29 [2] CRAN (R 4.1.0)
+ fansi                  1.0.3    2022-03-24 [2] CRAN (R 4.1.2)
+ farver                 2.1.1    2022-07-06 [2] CRAN (R 4.1.2)
+ forcats              * 0.5.2    2022-08-19 [2] CRAN (R 4.1.2)
+ formatR                1.12     2022-03-31 [2] CRAN (R 4.1.2)
+ fs                     1.5.2    2021-12-08 [2] CRAN (R 4.1.2)
+ futile.logger        * 1.4.3    2016-07-10 [2] CRAN (R 4.1.0)
+ futile.options         1.0.1    2018-04-20 [2] CRAN (R 4.1.0)
+ gargle                 1.2.0    2021-07-02 [2] CRAN (R 4.1.0)
+ generics               0.1.3    2022-07-05 [2] CRAN (R 4.1.2)
+ GenomeInfoDb         * 1.30.1   2022-01-30 [2] Bioconductor
+ GenomeInfoDbData       1.2.7    2021-11-01 [2] Bioconductor
+ GenomicRanges        * 1.46.1   2021-11-18 [2] Bioconductor
+ ggbeeswarm             0.6.0    2017-08-07 [2] CRAN (R 4.1.2)
+ ggplot2              * 3.3.6    2022-05-03 [2] CRAN (R 4.1.2)
+ ggrepel              * 0.9.1    2021-01-15 [2] CRAN (R 4.1.0)
+ glue                   1.6.2    2022-02-24 [2] CRAN (R 4.1.2)
+ googledrive            2.0.0    2021-07-08 [2] CRAN (R 4.1.0)
+ googlesheets4          1.0.1    2022-08-13 [2] CRAN (R 4.1.2)
+ gridExtra              2.3      2017-09-09 [2] CRAN (R 4.1.0)
+ gtable                 0.3.1    2022-09-01 [2] CRAN (R 4.1.2)
+ haven                  2.5.1    2022-08-22 [2] CRAN (R 4.1.2)
+ here                 * 1.0.1    2020-12-13 [2] CRAN (R 4.1.2)
+ hms                    1.1.2    2022-08-19 [2] CRAN (R 4.1.2)
+ httr                   1.4.4    2022-08-17 [2] CRAN (R 4.1.2)
+ IRanges              * 2.28.0   2021-10-26 [2] Bioconductor
+ irlba                  2.3.5    2021-12-06 [1] CRAN (R 4.1.2)
+ jaffelab             * 0.99.31  2021-10-29 [1] Github (LieberInstitute/jaffelab@2cbd55a)
+ jsonlite               1.8.0    2022-02-22 [2] CRAN (R 4.1.2)
+ labeling               0.4.2    2020-10-20 [2] CRAN (R 4.1.0)
+ lambda.r               1.2.4    2019-09-18 [2] CRAN (R 4.1.0)
+ lattice                0.20-45  2021-09-22 [3] CRAN (R 4.1.2)
+ lifecycle              1.0.1    2021-09-24 [1] CRAN (R 4.1.1)
+ limma                  3.50.3   2022-04-07 [2] Bioconductor
+ lubridate              1.8.0    2021-10-07 [2] CRAN (R 4.1.2)
+ magrittr               2.0.3    2022-03-30 [2] CRAN (R 4.1.2)
+ MASS                   7.3-56   2022-03-23 [3] CRAN (R 4.1.2)
+ Matrix                 1.4-1    2022-03-23 [3] CRAN (R 4.1.2)
+ MatrixGenerics       * 1.6.0    2021-10-26 [2] Bioconductor
+ matrixStats          * 0.62.0   2022-04-19 [2] CRAN (R 4.1.2)
+ mgcv                   1.8-40   2022-03-29 [3] CRAN (R 4.1.2)
+ modelr                 0.1.9    2022-08-19 [2] CRAN (R 4.1.2)
+ munsell                0.5.0    2018-06-12 [2] CRAN (R 4.1.0)
+ nlme                   3.1-157  2022-03-25 [3] CRAN (R 4.1.2)
+ pillar                 1.8.0    2022-07-18 [1] CRAN (R 4.1.2)
+ pkgconfig              2.0.3    2019-09-22 [2] CRAN (R 4.1.0)
+ plyr                   1.8.7    2022-03-24 [2] CRAN (R 4.1.2)
+ purrr                * 0.3.4    2020-04-17 [2] CRAN (R 4.1.0)
+ R6                     2.5.1    2021-08-19 [1] CRAN (R 4.1.1)
+ rafalib              * 1.0.0    2015-08-09 [1] CRAN (R 4.1.1)
+ ragg                   1.2.2    2022-02-21 [2] CRAN (R 4.1.2)
+ RColorBrewer           1.1-3    2022-04-03 [2] CRAN (R 4.1.2)
+ Rcpp                   1.0.9    2022-07-08 [2] CRAN (R 4.1.2)
+ RCurl                  1.98-1.8 2022-07-30 [2] CRAN (R 4.1.2)
+ readr                * 2.1.2    2022-01-30 [2] CRAN (R 4.1.2)
+ readxl                 1.4.1    2022-08-17 [2] CRAN (R 4.1.2)
+ reprex                 2.0.2    2022-08-17 [2] CRAN (R 4.1.2)
+ reshape2               1.4.4    2020-04-09 [2] CRAN (R 4.1.0)
+ rlang                  1.0.5    2022-08-31 [2] CRAN (R 4.1.2)
+ rprojroot              2.0.3    2022-04-02 [2] CRAN (R 4.1.2)
+ rsvd                   1.0.5    2021-04-16 [2] CRAN (R 4.1.2)
+ rvest                  1.0.3    2022-08-19 [2] CRAN (R 4.1.2)
+ S4Vectors            * 0.32.4   2022-03-24 [2] Bioconductor
+ ScaledMatrix           1.2.0    2021-10-26 [2] Bioconductor
+ scales                 1.2.1    2022-08-20 [2] CRAN (R 4.1.2)
+ scater               * 1.22.0   2021-10-26 [2] Bioconductor
+ scuttle              * 1.4.0    2021-10-26 [2] Bioconductor
+ segmented              1.4-1    2022-03-24 [1] CRAN (R 4.1.2)
+ sessioninfo          * 1.2.2    2021-12-06 [2] CRAN (R 4.1.2)
+ SingleCellExperiment * 1.16.0   2021-10-26 [2] Bioconductor
+ sparseMatrixStats      1.6.0    2021-10-26 [2] Bioconductor
+ stringi                1.7.8    2022-07-11 [2] CRAN (R 4.1.2)
+ stringr              * 1.4.1    2022-08-20 [2] CRAN (R 4.1.2)
+ SummarizedExperiment * 1.24.0   2021-10-26 [2] Bioconductor
+ systemfonts            1.0.4    2022-02-11 [2] CRAN (R 4.1.2)
+ textshaping            0.3.6    2021-10-13 [2] CRAN (R 4.1.2)
+ tibble               * 3.1.8    2022-07-22 [2] CRAN (R 4.1.2)
+ tidyr                * 1.2.0    2022-02-01 [2] CRAN (R 4.1.2)
+ tidyselect             1.1.2    2022-02-21 [2] CRAN (R 4.1.2)
+ tidyverse            * 1.3.2    2022-07-18 [2] CRAN (R 4.1.2)
+ tzdb                   0.3.0    2022-03-28 [2] CRAN (R 4.1.2)
+ utf8                   1.2.2    2021-07-24 [2] CRAN (R 4.1.0)
+ vctrs                  0.4.1    2022-04-13 [2] CRAN (R 4.1.2)
+ VennDiagram          * 1.7.3    2022-04-12 [2] CRAN (R 4.1.2)
+ vipor                  0.4.5    2017-03-22 [2] CRAN (R 4.1.2)
+ viridis                0.6.2    2021-10-13 [2] CRAN (R 4.1.2)
+ viridisLite            0.4.1    2022-08-22 [2] CRAN (R 4.1.2)
+ withr                  2.5.0    2022-03-03 [2] CRAN (R 4.1.2)
+ xml2                   1.3.3    2021-11-30 [2] CRAN (R 4.1.2)
+ XVector                0.34.0   2021-10-26 [2] Bioconductor
+ zlibbioc               1.40.0   2021-10-26 [2] Bioconductor
+
+ [1] /users/lhuuki/R/4.1.x
+ [2] /jhpce/shared/jhpce/core/conda/miniconda3-4.6.14/envs/svnR-4.1.x/R/4.1.x/lib64/R/site-library
+ [3] /jhpce/shared/jhpce/core/conda/miniconda3-4.6.14/envs/svnR-4.1.x/R/4.1.x/lib64/R/library
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 **** Job ends ****
-Wed Apr 19 15:46:41 EDT 2023
+Thu Apr 20 15:09:38 EDT 2023

@@ -412,7 +412,7 @@ hk_sum_smooth2_main <- counts_long %>%
     ggplot() +
     geom_smooth(aes(logsum, logcount, color = cellType.Broad), method = "lm") +
     facet_wrap(~Symbol, scales = "free_y", ncol = 1) +
-    scale_color_manual(values = cell_colors) +
+    scale_color_manual(values = cell_colors, name = "Cell Type") +
     theme_bw() +
     labs(x = "log2(sum)", y = "log2(count + 1)") +
     theme(text = element_text(size = 15),
