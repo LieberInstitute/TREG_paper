@@ -174,7 +174,7 @@ ggsave(filter_demo_scatter, filename = here(plot_dir, "main_pdf", "fig2b_propZer
 
 #### Fig 3. Real Rank Distribution ####
 load(here("processed-data", "01_find_tregs", "rank_df_subset.Rdata"), verbose = TRUE)
-# 4 canidiate genes * 70k nuclei
+# 4 candidate genes * 70k nuclei
 dim(rank_df_subset)
 # [1]     4 70527
 corner(rank_df_subset)
@@ -306,25 +306,29 @@ ggsave(sum_violin_ct, filename = here(plot_dir, "explore", "sum_violin_ct.png"),
 #### Fig 3. Do Expression trends over cell type track in our HK genes? ####
 hk_counts <- log2(as.matrix(assays(sce_pan[genes_of_interest$gene, ])$counts) + 1)
 
+load(here("processed-data", "01_find_tregs", "lmfit.Rdata"), verbose = TRUE)
+
+## added in review edits...not 100% this is the fix
+invar_t <- tt %>%
+  rownames_to_column("gene") %>% 
+  select(gene, t, adj.P.Val) %>%
+  right_join(genes_of_interest)
+
 counts_long <- as.data.frame(hk_counts) %>%
-    rownames_to_column("gene") %>%
-    pivot_longer(!gene, names_to = "ID", values_to = "logcount") %>%
-    left_join(pd %>% rownames_to_column("ID") %>% select(ID, cellType.Broad, sum)) %>%
-    mutate(logsum = log2(sum)) %>%
-    left_join(genes_of_interest)
+  rownames_to_column("gene") %>%
+  pivot_longer(!gene, names_to = "ID", values_to = "logcount") %>%
+  left_join(pd %>% rownames_to_column("ID") %>% select(ID, cellType.Broad, sum)) %>%
+  mutate(logsum = log2(sum)) %>%
+  # left_join(genes_of_interest) %>%
+  left_join(invar_t) %>%
+  mutate(Symbol = fct_reorder(Symbol, t, .desc = TRUE))
 
-# %>%
-#     left_join(invar_t %>% select(gene = ensembl_id, t, adj.P.Val))
-
-counts_long$Symbol <- factor(counts_long$Symbol)
-# counts_long$Symbol <- fct_reorder(counts_long$Symbol, counts_long$t, max)
 levels(counts_long$Symbol)
 
 model_anno <- invar_t %>%
-    filter(gene_anno != "other") %>%
-    mutate(anno = paste("t=", round(t, 1), "\nFDR=", scales::scientific(adj.P.Val, didgits = 3)))
-
-model_anno$Symbol <- factor(model_anno$Symbol, levels = levels(counts_long$Symbol))
+  filter(gene_anno != "other") %>%
+  mutate(anno = paste("t=", round(t, 1), "\nFDR=", scales::scientific(adj.P.Val, didgits = 3)),
+         Symbol = factor(Symbol, levels = levels(counts_long$Symbol)))
 
 hk_sum_scatter <- counts_long %>%
     ggplot(aes(logsum, logcount)) +
@@ -365,7 +369,7 @@ hk_sum_scatter_main <- counts_long %>%
         strip.text.x = element_text(face = "italic")
     )
 
-# ggsave(hk_sum_scatter_main, filename = here("plots","01_find_tregs","main_pdf","fig3_hk_sum_scatter_MALAT1.png"), width = 4.5, height = 5)
+ggsave(hk_sum_scatter_main, filename = here(plot_dir,"main_pdf","fig3_hk_sum_scatter_MALAT1.png"), width = 4.5, height = 5)
 ggsave(hk_sum_scatter_main, filename = here(plot_dir, "main_pdf", "fig3_hk_sum_scatter_MALAT1.pdf"), width = 4.5, height = 5)
 
 
@@ -381,7 +385,7 @@ hk_sum_scatter_main <- counts_long %>%
     coord_equal() +
     labs(x = "log2(sum)", y = "log2(count + 1)") +
     theme(
-        legend.position = "None",
+        # legend.position = "None",
         text = element_text(size = 15),
         strip.text.x = element_text(face = "italic")
     )
@@ -415,7 +419,7 @@ hk_sum_smooth2_main <- counts_long %>%
         strip.text.x = element_text(face = "italic")
     )
 
-# ggsave(hk_sum_smooth2_main, filename = here("plots","01_find_tregs","main_pdf","fig3_hk_sum_smooth2.png"), width = 4, height = 5)
+ggsave(hk_sum_smooth2_main, filename = here("plots","01_find_tregs","main_pdf","fig3_hk_sum_smooth2.png"), width = 4, height = 5)
 ggsave(hk_sum_smooth2_main, filename = here("plots", "01_find_tregs", "main_pdf", "fig3_hk_sum_smooth2.pdf"), width = 4, height = 5)
 
 gene_slopes <- counts_long %>%
