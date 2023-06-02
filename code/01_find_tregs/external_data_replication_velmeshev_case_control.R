@@ -1,113 +1,171 @@
 library("SingleCellExperiment")
-library("GGally")
 library("tidyverse")
 library("here")
 library("TREG")
-## Load Data
-gene_metrics <- read.csv(here("processed-data", "01_find_tregs", "supp_tables", "gene_metrics2.csv"), row.names = 1)
-cell_type_match <- read.csv(here("processed-data", "01_find_tregs", "Velmeshev_broad.csv")) %>%
-    select(-Note)
+library("org.Hs.eg.db")
 
-load("/dcl01/lieber/ajaffe/lab/deconvolution_bsp2/data/SCE_asd-velmeshev-etal_controls_multiBatchNorm.Rdata", verbose = TRUE)
-dim(sce.asd)
-# 36501 52556
+plot_dir <- here("plots", "01_find_tregs", "external_data_replication")
+if(!dir.exists(plot_dir)) dir.create(plot_dir)
+  
+## Load Data
+# gene_metrics <- read.csv(here("processed-data", "01_find_tregs", "supp_tables", "gene_metrics2.csv"), row.names = 1)
+cell_type_match <- read.csv(here("processed-data", "01_find_tregs", "Velmeshev_broad.csv")) %>%
+    dplyr::select(-Note)
+
+load("/dcl01/ajaffe/data/lab/singleCell/velmeshev2019/analysis_MNT/SCE_asd-velmeshev-etal_MNT.rda",
+     verbose = T
+) # sce.asd
+sce.asd
+# 36501 104559
+
+table(sce.asd$diagnosis, sce.asd$region)
+#           ACC   PFC
+# ASD     19984 32019
+# Control 22409 30147
 
 ## Populate rowData
+annots <- select(org.Hs.eg.db, keys=rownames(sce.asd), 
+                 columns="SYMBOL", keytype="ENSEMBL")
+nrow(annots)
+# 'select()' returned 1:many mapping between keys and columns
+annots |> group_by(ENSEMBL) |> filter(n()  > 2)
+
+## just pick first match - not perfect...
+rd <- annots |>
+  group_by(ENSEMBL) |>
+  slice(1)
+
+nrow(rd) == nrow(sce.asd)
+
+rowData(sce.asd) <- DataFrame(rd)
 rowData(sce.asd)
 
-rowData(sce.asd) <- DataFrame(ensmblID = rownames(sce.asd))
+rd |> filter(SYMBOL %in% c("MALAT1", "AKT3", "ARID1B"))
 
-#### Filter to Prop Zero Genes from 10x data ####
-gene_set <- gene_metrics$ensembl_id[gene_metrics$PropZero_filter]
-length(gene_set)
-# [1] 877
-table(gene_set %in% row.names(sce.asd))
-# FALSE  TRUE
-#     1   876
-sce.asd <- sce.asd[gene_set[gene_set %in% row.names(sce.asd)], ]
-dim(sce.asd)
-
+## note most donors are < 17
+table(sce.asd$age)
+# 4     6     7     8    11    12    13    14    15    16    19    20    21    22 
+# 2973  2255  5915  2176  2812 17343 11528 10033 14720  1112 15467  4670  8871  4684
 
 #### Match Up Cell Types ####
 pd <- colData(sce.asd) %>%
     as.data.frame() %>%
     left_join(cell_type_match)
+
 colData(sce.asd) <- DataFrame(pd)
 
-cat(levels(sce.asd$cluster), "\n")
+unique(sce.asd$cluster)
 table(sce.asd$cluster, sce.asd$cellType.Broad)
-# Astro Endo Excit Inhib Micro Oligo  OPC
-# AST-FB            2114    0     0     0     0     0    0
-# AST-PP            2530    0     0     0     0     0    0
-# Endothelial          0 1548     0     0     0     0    0
-# IN-PV                0    0     0  2062     0     0    0
-# IN-SST               0    0     0  2449     0     0    0
-# IN-SV2C              0    0     0   887     0     0    0
-# IN-VIP               0    0     0  2686     0     0    0
-# L2/3                 0    0  6085     0     0     0    0
-# L4                   0    0  3258     0     0     0    0
-# L5/6                 0    0  1780     0     0     0    0
-# L5/6-CC              0    0  2210     0     0     0    0
-# Microglia            0    0     0     0  1822     0    0
-# Neu-mat              0    0  1981     0     0     0    0
-# Neu-NRGN-I           0    0  2027     0     0     0    0
-# Neu-NRGN-II          0    0  4731     0     0     0    0
-# Oligodendrocytes     0    0     0     0     0  9603    0
-# OPC                  0    0     0     0     0     0 4783
+#                  Astro  Endo Excit Inhib Micro Oligo   OPC
+# AST-FB            4562     0     0     0     0     0     0
+# AST-PP            7655     0     0     0     0     0     0
+# Endothelial          0  2668     0     0     0     0     0
+# IN-PV                0     0     0  4037     0     0     0
+# IN-SST               0     0     0  4569     0     0     0
+# IN-SV2C              0     0     0  1914     0     0     0
+# IN-VIP               0     0     0  5974     0     0     0
+# L2/3                 0     0 13324     0     0     0     0
+# L4                   0     0  6858     0     0     0     0
+# L5/6                 0     0  3561     0     0     0     0
+# L5/6-CC              0     0  4617     0     0     0     0
+# Microglia            0     0     0     0  3331     0     0
+# Neu-mat              0     0  4135     0     0     0     0
+# Neu-NRGN-I           0     0  3543     0     0     0     0
+# Neu-NRGN-II          0     0  8317     0     0     0     0
+# Oligodendrocytes     0     0     0     0     0 15371     0
+# OPC                  0     0     0     0     0     0 10123
 
-summary(sce.asd$age)
+## no cell types < 50 
+table(sce.asd$cellType.Broad, sce.asd$diagnosis)
+# Astro  Endo Excit Inhib Micro Oligo   OPC 
+# 12217  2668 44355 16494  3331 15371 10123
 
-## Run RI with all data, Velm clusters
-rank_invar_velm <- rank_invariance_express(sce.asd, group_col = "cluster")
-gene_metrics_velm <- as.data.frame(rank_invar_velm) %>%
-    rownames_to_column("ensembl_id")
+## Dx sets
 
-## Run RI with all data, broad cell types
-rank_invar_velm_broad <- rank_invariance_express(sce.asd, group_col = "cellType.Broad")
-gene_metrics_velm_broad <- as.data.frame(rank_invar_velm_broad) %>%
-    rownames_to_column("ensembl_id")
+dx_sets <- list(all = c("ASD", "Control"), case = "ASD", control = "Control")
 
-## Run RI with 17+ data, broad cell types
-sce.asd <- sce.asd[, sce.asd$age > 17]
-dim(sce.asd)
-# [1]   876 17784
+velm_case_control_rank_invar <- map2(dx_sets, names(dx_sets), function(dx, name){
+  
+  ## subset 
+  
+  sce.asd <- sce.asd[, sce.asd$diagnosis %in% dx]
+  message("subset to ", name, ", nrow  = ", nrow(sce.asd))
+  
+  #### Filter to top 50% and low Prop Zero Genes from 10x data ####
+  
+  ## filter to top 50%
+  message(Sys.time(), " - Top 50% filter")
+  row_means <- rowMeans(assays(sce.asd)$logcounts)
+  (median_row_means <- median(row_means))
+  # [1] 0.0121892
+  
+  sce.asd <- sce.asd[row_means > median_row_means, ]
+  message("Subset to top 50%: nrow:", nrow(sce.asd))
+  # [1] 18250
+  
+  ## prop zero
+  ## can't use logcounts in get_prop_zero fake it - fix this in package
+  names(assays(sce.asd)) <- "counts"
+  
+  message(Sys.time(), " - Get Prop Zero")
+  prop_zeros <- get_prop_zero(sce.asd, group_col = "cellType.Broad")
+  head(prop_zeros)
+  
+  ## swap it back
+  names(assays(sce.asd)) <- "logcounts"
+  
+  ## plot prop zero
+  # Pivot data longer for plotting
+  prop_zero_long <- prop_zeros %>%
+    rownames_to_column("Gene") %>%
+    pivot_longer(!Gene, names_to = "Group", values_to = "prop_zero")
+  
+  # Plot histograms
+  propZero_limit = 0.85
+  
+  prop_zero_histogram <- ggplot(
+    data = prop_zero_long,
+    aes(x = prop_zero, fill = Group)
+  ) +
+    geom_histogram(binwidth = 0.05) +
+    facet_wrap(~Group) +
+    geom_vline(xintercept = propZero_limit, color = "red", linetype = "dashed")
+  
+  ggsave(prop_zero_histogram, filename = here(plot_dir,paste0("Velm_",name,"_prop_zero_histo.png")))
+  
+  ## filter genes 
+  message(Sys.time(), "filter prop zero")
+  filtered_genes <- filter_prop_zero(prop_zeros, cutoff = propZero_limit)
+  message("n genes: ",length(filtered_genes))
+  # [1] 434 with limit = 0.85
+  
+  ## check 10x TREGs 
+  # rd |> filter(SYMBOL %in% c("MALAT1", "AKT3", "ARID1B")) |> mutate(ENSEMBL %in% filtered_genes)
+  
+  ## filter
+  # length(filtered_genes) / nrow(sce.asd)
+  sce.asd <- sce.asd[filtered_genes, ]
+  
+  
+  ## Run RI with all data, broad cell types
+  rank_invar_velm <- rank_invariance_express(sce.asd, group_col = "cellType.Broad")
+  
+  gene_metrics_velm_broad <- as.data.frame(rank_invar_velm_all_broad) |>
+    rownames_to_column("ENSEMBL") |> 
+    arrange(-rank_invar_velm_all_broad) |>
+    left_join(rd)
+  
+  # head(gene_metrics_velm_broad, n = 25)
+  
+  # gene_metrics_velm_broad |> filter(SYMBOL %in% c("MALAT1", "AKT3", "ARID1B"))
+  
+  return(rank_invar_velm)
+  
+})
 
-rank_invar_velm_age <- rank_invariance_express(sce.asd, group_col = "cluster")
-gene_metrics_velm_age <- as.data.frame(rank_invar_velm_age) %>%
-    rownames_to_column("ensembl_id")
+save(velm_case_control_rank_invar, here("processed_data","01_find_tregs","velm_case_control_rank_invar.Rdata"))
 
-## Add to gene  metrics
-gene_metrics <- gene_metrics %>%
-    left_join(gene_metrics_velm) %>%
-    left_join(gene_metrics_velm_broad) %>%
-    left_join(gene_metrics_velm_age)
-
-write.csv(gene_metrics, file = here("processed-data", "01_find_tregs", "gene_metrics_velm.csv"))
-
-gene_metrics %>%
-    filter(rank_invar > 867) %>%
-    arrange(-rank_invar) %>%
-    select(Symbol, starts_with("rank_invar"))
-
-gene_metrics %>%
-    filter(rank_invar < 10) %>%
-    arrange(-rank_invar) %>%
-    select(Symbol, starts_with("rank_invar"))
-
-#### Plots ####
-plot_dir <- "plots/01_find_tregs"
-
-# scatter_RI <- gene_metrics %>%
-#   ggplot(aes(x = rank_invar, y = rank_invar_velm, color = Gene.Type)) +
-#   geom_text(aes(label = ifelse(!is.na(Gene.Type),Symbol,"")), color = "black") +
-#   geom_point()+
-#   theme_bw()
-
-scatter_RI <- ggpairs(gene_metrics,
-    columns = c("rank_invar", "rank_invar_velm", "rank_invar_velm_broad", "rank_invar_velm_age")
-)
-
-ggsave(scatter_RI, filename = here(plot_dir, "explore", "velm_RI_scatter.png"))
+# sgejobs::job_single('external_data_replication_velmeshev_case_control', create_shell = TRUE, memory = '100G', command = "Rscript external_data_replication_velmeshev_case_control.R")
 
 
 ## Reproducibility information
