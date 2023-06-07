@@ -150,7 +150,7 @@ velm_case_control_rank_invar <- map2(dx_sets, names(dx_sets), function(dx, name)
   ## Run RI with all data, broad cell types
   rank_invar_velm <- rank_invariance_express(sce.asd, group_col = "cellType.Broad")
   
-  gene_metrics_velm_broad <- as.data.frame(rank_invar_velm_all_broad) |>
+  gene_metrics_velm_broad <- as.data.frame(rank_invar_velm) |>
     rownames_to_column("ENSEMBL") |> 
     arrange(-rank_invar_velm_all_broad) |>
     left_join(rd)
