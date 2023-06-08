@@ -89,7 +89,7 @@ velm_case_control_rank_invar <- map2(dx_sets, names(dx_sets), function(dx, name)
   ## subset 
   
   sce.asd <- sce.asd[, sce.asd$diagnosis %in% dx]
-  message("subset to ", name, ", nrow  = ", nrow(sce.asd))
+  message("subset to ", name, ", ncol  = ", ncol(sce.asd))
   
   #### Filter to top 50% and low Prop Zero Genes from 10x data ####
   
@@ -152,8 +152,7 @@ velm_case_control_rank_invar <- map2(dx_sets, names(dx_sets), function(dx, name)
   
   gene_metrics_velm_broad <- as.data.frame(rank_invar_velm) |>
     rownames_to_column("ENSEMBL") |> 
-    arrange(-rank_invar_velm_all_broad) |>
-    left_join(rd)
+    arrange(-rank_invar_velm)
   
   # head(gene_metrics_velm_broad, n = 25)
   
@@ -163,7 +162,7 @@ velm_case_control_rank_invar <- map2(dx_sets, names(dx_sets), function(dx, name)
   
 })
 
-save(velm_case_control_rank_invar, here("processed_data","01_find_tregs","velm_case_control_rank_invar.Rdata"))
+save(velm_case_control_rank_invar, file = here("processed_data","01_find_tregs","velm_case_control_rank_invar.Rdata"))
 
 # sgejobs::job_single('external_data_replication_velmeshev_case_control', create_shell = TRUE, memory = '100G', command = "Rscript external_data_replication_velmeshev_case_control.R")
 

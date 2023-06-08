@@ -1,6 +1,6 @@
 #!/bin/bash
 #$ -cwd
-#$ -l mem_free=100G,h_vmem=100G,h_fsize=100G
+#$ -l mem_free=200G,h_vmem=200G,h_fsize=100G
 #$ -N external_data_replication_velmeshev_case_control
 #$ -o logs/external_data_replication_velmeshev_case_control.txt
 #$ -e logs/external_data_replication_velmeshev_case_control.txt
