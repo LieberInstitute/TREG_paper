@@ -18,16 +18,31 @@ dir_rdata <- here::here(
 dir.create(dir_rdata, showWarnings = FALSE, recursive = TRUE)
 
 ## Load ranked candidate TREGs
-load(here("processed-data", "01_find_tregs", "rank_invar.Rdata"), verbose = TRUE)
+load(here("processed-data", "01_find_tregs", "rank_invar.Rdata"),
+    verbose = TRUE
+)
 
 ## Get ENTREZID
-sigGene <- lapply(c(20, 50), function(k) { 
-    bitr(head(rank_invar_df$ensembl_id, n = k), fromType = "ENSEMBL", toType = "ENTREZID", OrgDb = "org.Hs.eg.db")$ENTREZID
+sigGene <- lapply(c(20, 50), function(k) {
+    bitr(
+        head(rank_invar_df$ensembl_id, n = k),
+        fromType = "ENSEMBL",
+        toType = "ENTREZID",
+        OrgDb = "org.Hs.eg.db"
+    )$ENTREZID
 })
 names(sigGene) <- c(20, 50)
 lengths(sigGene)
 
-geneUniverse <- unique(bitr(rownames(gene_propZero), fromType = "ENSEMBL", toType = "ENTREZID", OrgDb = "org.Hs.eg.db")$ENTREZID)
+geneUniverse <-
+    unique(
+        bitr(
+            rownames(gene_propZero),
+            fromType = "ENSEMBL",
+            toType = "ENTREZID",
+            OrgDb = "org.Hs.eg.db"
+        )$ENTREZID
+    )
 length(geneUniverse)
 # [1] 10981
 
@@ -35,7 +50,8 @@ length(geneUniverse)
 ## https://github.com/LieberInstitute/septum_lateral/blob/main/snRNAseq_mouse/code/05_GO_enrichment/01_GO_enrichment.R
 
 ## Run GO and KEGG enrichment analysis
-go <- compareCluster(sigGene,
+go <- compareCluster(
+    sigGene,
     fun = "enrichGO",
     universe = geneUniverse,
     OrgDb = "org.Hs.eg.db",
@@ -51,13 +67,18 @@ kegg <- compareCluster(sigGene,
 )
 
 ## Save Rdata with gene ontology enrichment results
-save(go, kegg, file = file.path(dir_rdata,
-    "gene_ontology_enrichment_objects.Rdata"
-))
+save(go,
+    kegg,
+    file = file.path(
+        dir_rdata,
+        "gene_ontology_enrichment_objects.Rdata"
+    )
+)
 
 ## Plot BP, CC and MF
 plot_go <- function(ont, title_p, path, filename) {
-    dotplot_1 <- ggplot(filter(go, ONTOLOGY == ont), aes(Cluster, Description)) +
+    dotplot_1 <-
+        ggplot(filter(go, ONTOLOGY == ont), aes(Cluster, Description)) +
         theme_bw() +
         geom_point(aes(color = p.adjust, size = Count)) +
         scale_color_gradientn(
@@ -71,12 +92,33 @@ plot_go <- function(ont, title_p, path, filename) {
         ylab("") +
         ggtitle(title_p)
 
-    ggsave(filename = filename, path = path, dotplot_1, height = 6, width = 5)
+    ggsave(
+        filename = filename,
+        path = path,
+        dotplot_1,
+        height = 6,
+        width = 5
+    )
 }
 
-plot_go(ont = "BP", title_p = "Biological Process", filename = "GOenrichment_BP.pdf", path = dir_plots)
-plot_go(ont = "CC", title_p = "Cellular Component", filename = "GOenrichment_CC.pdf", path = dir_plots)
-plot_go(ont = "MF", title_p = "Molecular Function", filename = "GOenrichment_MF.pdf", path = dir_plots)
+plot_go(
+    ont = "BP",
+    title_p = "Biological Process",
+    filename = "GOenrichment_BP.pdf",
+    path = dir_plots
+)
+plot_go(
+    ont = "CC",
+    title_p = "Cellular Component",
+    filename = "GOenrichment_CC.pdf",
+    path = dir_plots
+)
+plot_go(
+    ont = "MF",
+    title_p = "Molecular Function",
+    filename = "GOenrichment_MF.pdf",
+    path = dir_plots
+)
 
 ## Plot KEGG
 dotplot_1 <- ggplot(kegg, aes(Cluster, Description)) +
@@ -93,7 +135,13 @@ dotplot_1 <- ggplot(kegg, aes(Cluster, Description)) +
     ylab("") +
     ggtitle("KEGG")
 
-ggsave(filename = "KEGGenrichment.pdf", path = dir_plots, dotplot_1, height = 6, width = 5)
+ggsave(
+    filename = "KEGGenrichment.pdf",
+    path = dir_plots,
+    dotplot_1,
+    height = 6,
+    width = 5
+)
 
 ## Print some result
 as.data.frame(go)[, -10]
@@ -120,21 +168,21 @@ as.data.frame(go)[, -10]
 # 20      50       MF GO:0003682                  chromatin binding      8/46 383/9777 3.638758e-04 2.158996e-02 1.851298e-02     8
 
 sort(table(as.data.frame(go)$geneID), decreasing = TRUE)
-#                                                 KANSL1/KMT2C/RLF/ASH1L/NCOA6                                           KANSL1/KMT2C/RLF/ASH1L/NCOA6/SUZ12 
-#                                                                            3                                                                            3 
-#                                                     KANSL1/KMT2C/NCOA6/SUZ12                                                      ARID1B/RERE/KMT2C/EP300 
-#                                                                            2                                                                            1 
-#                                    ARID1B/RERE/KMT2C/EP300/DDX17/CCAR1/NCOA6                                                     ARID1B/SF3B1/TRRAP/SUZ12 
-#                                                                            1                                                                            1 
-#                            JMJD1C/ARID1B/RERE/EP300/ASH1L/NCOA6/SUZ12/NAP1L4                                  JMJD1C/ARID1B/RERE/KANSL1/SF3B1/KMT2C/EP300 
-#                                                                            1                                                                            1 
-#    JMJD1C/ARID1B/RERE/KANSL1/SF3B1/KMT2C/EP300/TRRAP/ASH1L/TLK2/SUZ12/NAP1L4                                               JMJD1C/ARID1B/RERE/KMT2C/EP300 
-#                                                                            1                                                                            1 
-# JMJD1C/ARID1B/RERE/KMT2C/EP300/MED13L/DDX17/TRRAP/CCAR1/N4BP2L2/NCOA6/BCLAF1                  JMJD1C/KANSL1/SF3B1/KMT2C/EP300/TRRAP/RLF/ASH1L/NCOA6/SUZ12 
-#                                                                            1                                                                            1 
-#                               KANSL1/SF3B1/KMT2C/EP300/TRRAP/RLF/ASH1L/NCOA6                                                                  KMT2C/NCOA6 
-#                                                                            1                                                                            1 
-#                                  SF3B1/THOC2/DDX17/TCF12/SRSF4/PRPF4B/BCLAF1 
+#                                                 KANSL1/KMT2C/RLF/ASH1L/NCOA6                                           KANSL1/KMT2C/RLF/ASH1L/NCOA6/SUZ12
+#                                                                            3                                                                            3
+#                                                     KANSL1/KMT2C/NCOA6/SUZ12                                                      ARID1B/RERE/KMT2C/EP300
+#                                                                            2                                                                            1
+#                                    ARID1B/RERE/KMT2C/EP300/DDX17/CCAR1/NCOA6                                                     ARID1B/SF3B1/TRRAP/SUZ12
+#                                                                            1                                                                            1
+#                            JMJD1C/ARID1B/RERE/EP300/ASH1L/NCOA6/SUZ12/NAP1L4                                  JMJD1C/ARID1B/RERE/KANSL1/SF3B1/KMT2C/EP300
+#                                                                            1                                                                            1
+#    JMJD1C/ARID1B/RERE/KANSL1/SF3B1/KMT2C/EP300/TRRAP/ASH1L/TLK2/SUZ12/NAP1L4                                               JMJD1C/ARID1B/RERE/KMT2C/EP300
+#                                                                            1                                                                            1
+# JMJD1C/ARID1B/RERE/KMT2C/EP300/MED13L/DDX17/TRRAP/CCAR1/N4BP2L2/NCOA6/BCLAF1                  JMJD1C/KANSL1/SF3B1/KMT2C/EP300/TRRAP/RLF/ASH1L/NCOA6/SUZ12
+#                                                                            1                                                                            1
+#                               KANSL1/SF3B1/KMT2C/EP300/TRRAP/RLF/ASH1L/NCOA6                                                                  KMT2C/NCOA6
+#                                                                            1                                                                            1
+#                                  SF3B1/THOC2/DDX17/TCF12/SRSF4/PRPF4B/BCLAF1
 #                                                                            1
 
 ## I do see ARID1B in several ones here, but not AKT3.
@@ -206,40 +254,68 @@ as.data.frame(kegg)[, -9]
 sort(table(as.data.frame(kegg)$geneID), decreasing = TRUE)
 
 
-#      10000/5894       10000/5894/2033            10000/2033             5894/2033      10000/57492/5894 10000/5894/2033/23389  10000/5894/2033/2776 
-#              39                    12                     2                     2                     1                     1                     1 
-# 10000/5894/2776             6310/2033 
-#               1                     1 
+#      10000/5894       10000/5894/2033            10000/2033             5894/2033      10000/57492/5894 10000/5894/2033/23389  10000/5894/2033/2776
+#              39                    12                     2                     2                     1                     1                     1
+# 10000/5894/2776             6310/2033
+#               1                     1
 
 subset(rank_invar_df, Symbol == "AKT3")
 #   Symbol      ensembl_id rank_invar
 # 5   AKT3 ENSG00000117020        873
 
-bitr("ENSG00000117020", fromType = "ENSEMBL", toType = "ENTREZID", OrgDb = "org.Hs.eg.db")
+bitr(
+    "ENSG00000117020",
+    fromType = "ENSEMBL",
+    toType = "ENTREZID",
+    OrgDb = "org.Hs.eg.db"
+)
 #           ENSEMBL ENTREZID
 # 1 ENSG00000117020    10000
 
-bitr("10000", fromType = "ENTREZID", toType = "SYMBOL", OrgDb = "org.Hs.eg.db")
+bitr("10000",
+    fromType = "ENTREZID",
+    toType = "SYMBOL",
+    OrgDb = "org.Hs.eg.db"
+)
 #  ENTREZID SYMBOL
 # 1    10000   AKT3
-bitr("5894", fromType = "ENTREZID", toType = "SYMBOL", OrgDb = "org.Hs.eg.db")
+bitr("5894",
+    fromType = "ENTREZID",
+    toType = "SYMBOL",
+    OrgDb = "org.Hs.eg.db"
+)
 #   ENTREZID SYMBOL
 # 1     5894   RAF1
-bitr("2033", fromType = "ENTREZID", toType = "SYMBOL", OrgDb = "org.Hs.eg.db")
+bitr("2033",
+    fromType = "ENTREZID",
+    toType = "SYMBOL",
+    OrgDb = "org.Hs.eg.db"
+)
 #   ENTREZID SYMBOL
 # 1     2033  EP300
 
 ## Switch from ENTREZID to SYMBOL
 kegg_df <- as.data.frame(kegg)
-kegg_df$geneID <- unlist(lapply(strsplit(as.data.frame(kegg)$geneID, "/"), function(x) { paste0(bitr(x, fromType = "ENTREZID", toType = "SYMBOL", OrgDb = "org.Hs.eg.db")$SYMBOL, collapse = "/") }))
+kegg_df$geneID <-
+    unlist(lapply(strsplit(as.data.frame(kegg)$geneID, "/"), function(x) {
+        paste0(
+            bitr(
+                x,
+                fromType = "ENTREZID",
+                toType = "SYMBOL",
+                OrgDb = "org.Hs.eg.db"
+            )$SYMBOL,
+            collapse = "/"
+        )
+    }))
 
 sort(table(kegg_df$geneID), decreasing = TRUE)
-#        AKT3/RAF1        AKT3/RAF1/EP300             AKT3/EP300             RAF1/EP300 
-#               39                     12                      2                      2 
-# AKT3/ARID1B/RAF1   AKT3/RAF1/EP300/GNAQ AKT3/RAF1/EP300/MED13L         AKT3/RAF1/GNAQ 
-#                1                      1                      1                      1 
-#      ATXN1/EP300 
-#                1 
+#        AKT3/RAF1        AKT3/RAF1/EP300             AKT3/EP300             RAF1/EP300
+#               39                     12                      2                      2
+# AKT3/ARID1B/RAF1   AKT3/RAF1/EP300/GNAQ AKT3/RAF1/EP300/MED13L         AKT3/RAF1/GNAQ
+#                1                      1                      1                      1
+#      ATXN1/EP300
+#                1
 
 ## Below we see the full results Note that the defaults for
 ## enrichGO() and enrichKEGG() are:
@@ -357,7 +433,7 @@ session_info()
 #  date     2023-06-13
 #  rstudio  2023.06.0+421 Mountain Hydrangea (desktop)
 #  pandoc   2.17.1.1 @ /opt/homebrew/bin/pandoc
-# 
+#
 # ─ Packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 #  package          * version   date (UTC) lib source
 #  AnnotationDbi    * 1.62.1    2023-05-02 [1] Bioconductor
@@ -496,7 +572,7 @@ session_info()
 #  XVector            0.40.0    2023-04-25 [1] Bioconductor
 #  yulab.utils        0.0.6     2022-12-20 [1] CRAN (R 4.3.0)
 #  zlibbioc           1.46.0    2023-04-25 [1] Bioconductor
-# 
+#
 #  [1] /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library
-# 
+#
 # ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
