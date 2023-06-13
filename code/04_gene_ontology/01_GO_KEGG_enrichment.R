@@ -13,17 +13,8 @@ dir_plots <- here::here(
 )
 dir.create(dir_plots, showWarnings = FALSE, recursive = TRUE)
 
-## Locate data directory
-dir_rdata <- here::here(
-    "code",
-    "18_deploy_app_wholegenome_Abeta_microenv"
-)
-
-load(file.path(dir_rdata, "Visium_SPG_AD_modeling_results.Rdata"),
-    verbose = TRUE
-)
-sce_pseudo <-
-    readRDS(file.path(dir_rdata, "sce_pseudo_pathology_wholegenome.rds"))
+## Load ranked candidate TREGs
+load(here("processed-data", "01_find_tregs", "supp_tables", "rank_invar.Rdata"), verbose = TRUE)
 
 
 ## For sig_genes_extract_all() to work
