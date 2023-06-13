@@ -1,0 +1,262 @@
+Adding LIBD modules
+Loading git
+Loading LIBD module for git-status-size/github
+Loading LIBD module for git-lfs/2.8.0
+Loading LIBD module for rmate/1.5.9
+Loading LIBD module for ruby/2.6.4p104
+Loading conda_R/4.3
+**** Job starts ****
+Thu Jun  8 16:19:29 EDT 2023
+**** JHPCE info ****
+User: lhuuki
+Job id: 3553903
+Job name: external_data_replication_velmeshev_case_control
+Hostname: compute-122.cm.cluster
+Task id: undefined
+Unloading conda_R/4.3
+Loading conda_R/4.2.x
+
+The following have been reloaded with a version change:
+  1) conda_R/4.3 => conda_R/4.2.x
+
+
+Currently Loaded Modules:
+  1) matlab/R2019a     6) COMMUNITY_CENTOS7_DEFAULT_ENV  11) ruby/2.6.4p104
+  2) stata/17          7) JHPCE_CENTOS7_DEFAULT_ENV      12) rmate/1.5.9
+  3) JHPCE_tools/1.0   8) git-status-size/github         13) conda/3-4.11.0
+  4) sge/8.1.9         9) git/2.28.0                     14) conda_R/4.2.x
+  5) gcc/4.4.7        10) git-lfs/2.8.0
+
+ 
+
+Loading required package: SummarizedExperiment
+Loading required package: MatrixGenerics
+Loading required package: matrixStats
+
+Attaching package: ‘MatrixGenerics’
+
+The following objects are masked from ‘package:matrixStats’:
+
+    colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,
+    colCounts, colCummaxs, colCummins, colCumprods, colCumsums,
+    colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,
+    colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,
+    colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,
+    colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,
+    colWeightedMeans, colWeightedMedians, colWeightedSds,
+    colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,
+    rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,
+    rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,
+    rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,
+    rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,
+    rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,
+    rowWeightedMads, rowWeightedMeans, rowWeightedMedians,
+    rowWeightedSds, rowWeightedVars
+
+Loading required package: GenomicRanges
+Loading required package: stats4
+Loading required package: BiocGenerics
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, aperm, append, as.data.frame, basename, cbind,
+    colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,
+    get, grep, grepl, intersect, is.unsorted, lapply, Map, mapply,
+    match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
+    Position, rank, rbind, Reduce, rownames, sapply, setdiff, sort,
+    table, tapply, union, unique, unsplit, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following objects are masked from ‘package:base’:
+
+    expand.grid, I, unname
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+Loading required package: Biobase
+Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    'browseVignettes()'. To cite Bioconductor, see
+    'citation("Biobase")', and for packages 'citation("pkgname")'.
+
+
+Attaching package: ‘Biobase’
+
+The following object is masked from ‘package:MatrixGenerics’:
+
+    rowMedians
+
+The following objects are masked from ‘package:matrixStats’:
+
+    anyMissing, rowMedians
+
+── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.1     ✔ readr     2.1.4
+✔ forcats   1.0.0     ✔ stringr   1.5.0
+✔ ggplot2   3.4.2     ✔ tibble    3.2.1
+✔ lubridate 1.9.2     ✔ tidyr     1.3.0
+✔ purrr     1.0.1     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ lubridate::%within%() masks IRanges::%within%()
+✖ dplyr::collapse()     masks IRanges::collapse()
+✖ dplyr::combine()      masks Biobase::combine(), BiocGenerics::combine()
+✖ dplyr::count()        masks matrixStats::count()
+✖ dplyr::desc()         masks IRanges::desc()
+✖ tidyr::expand()       masks S4Vectors::expand()
+✖ dplyr::filter()       masks stats::filter()
+✖ dplyr::first()        masks S4Vectors::first()
+✖ dplyr::lag()          masks stats::lag()
+✖ ggplot2::Position()   masks BiocGenerics::Position(), base::Position()
+✖ purrr::reduce()       masks GenomicRanges::reduce(), IRanges::reduce()
+✖ dplyr::rename()       masks S4Vectors::rename()
+✖ lubridate::second()   masks S4Vectors::second()
+✖ lubridate::second<-() masks S4Vectors::second<-()
+✖ dplyr::slice()        masks IRanges::slice()
+ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+here() starts at /dcs04/lieber/lcolladotor/deconvolution_LIBD4030/TREG_paper
+Loading required package: AnnotationDbi
+
+Attaching package: ‘AnnotationDbi’
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+
+Loading objects:
+  sce.asd
+class: SingleCellExperiment 
+dim: 36501 104559 
+metadata(0):
+assays(1): logcounts
+rownames(36501): ENSG00000227232 ENSG00000243485 ... ENSG00000210195
+  ENSG00000210196
+rowData names(0):
+colnames(104559): AAACCTGGTACGCACC-1_1823_BA24
+  AAACGGGCACCAGATT-1_1823_BA24 ... TTTGTCATCCCAAGTA-1_6033_BA9
+  TTTGTCATCGTTACGA-1_6033_BA9
+colData names(17): cell cluster ... BAregion contrast
+reducedDimNames(1): TSNE.prov
+mainExpName: NULL
+altExpNames(0):
+         
+            ACC   PFC
+  ASD     19984 32019
+  Control 22409 30147
+'select()' returned 1:many mapping between keys and columns
+[1] 36690
+# A tibble: 31 × 2
+# Groups:   ENSEMBL [10]
+   ENSEMBL         SYMBOL        
+   <chr>           <chr>         
+ 1 ENSG00000143429 LSP1P5        
+ 2 ENSG00000143429 LSP1P4        
+ 3 ENSG00000143429 LOC107985911  
+ 4 ENSG00000229140 CCDC26        
+ 5 ENSG00000229140 LINC00977     
+ 6 ENSG00000229140 LINC00976     
+ 7 ENSG00000187954 ZFTRAF1       
+ 8 ENSG00000187954 TMEM276       
+ 9 ENSG00000187954 LOC84773-CYHR1
+10 ENSG00000258537 FRMD6-AS1     
+# ℹ 21 more rows
+[1] TRUE
+DataFrame with 36501 rows and 2 columns
+                        ENSEMBL      SYMBOL
+                    <character> <character>
+ENSG00000227232 ENSG00000000003      TSPAN6
+ENSG00000243485 ENSG00000000005        TNMD
+ENSG00000238009 ENSG00000000419        DPM1
+ENSG00000233750 ENSG00000000457       SCYL3
+ENSG00000268903 ENSG00000000460    C1orf112
+...                         ...         ...
+ENSG00000198786 ENSG00000281889          NA
+ENSG00000198695 ENSG00000281895          NA
+ENSG00000198727 ENSG00000281896          NA
+ENSG00000210195 ENSG00000281904          NA
+ENSG00000210196 ENSG00000281912   LINC01144
+# A tibble: 3 × 2
+# Groups:   ENSEMBL [3]
+  ENSEMBL         SYMBOL
+  <chr>           <chr> 
+1 ENSG00000049618 ARID1B
+2 ENSG00000117020 AKT3  
+3 ENSG00000251562 MALAT1
+
+    4     6     7     8    11    12    13    14    15    16    19    20    21 
+ 2973  2255  5915  2176  2812 17343 11528 10033 14720  1112 15467  4670  8871 
+   22 
+ 4684 
+Joining with `by = join_by(cluster)`
+ [1] "Neu-NRGN-II"      "L5/6"             "Oligodendrocytes" "OPC"             
+ [5] "AST-FB"           "Endothelial"      "Microglia"        "Neu-NRGN-I"      
+ [9] "IN-VIP"           "L5/6-CC"          "IN-SV2C"          "L2/3"            
+[13] "IN-PV"            "L4"               "IN-SST"           "Neu-mat"         
+[17] "AST-PP"          
+                  
+                   Astro  Endo Excit Inhib Micro Oligo   OPC
+  AST-FB            4562     0     0     0     0     0     0
+  AST-PP            7655     0     0     0     0     0     0
+  Endothelial          0  2668     0     0     0     0     0
+  IN-PV                0     0     0  4037     0     0     0
+  IN-SST               0     0     0  4569     0     0     0
+  IN-SV2C              0     0     0  1914     0     0     0
+  IN-VIP               0     0     0  5974     0     0     0
+  L2/3                 0     0 13324     0     0     0     0
+  L4                   0     0  6858     0     0     0     0
+  L5/6                 0     0  3561     0     0     0     0
+  L5/6-CC              0     0  4617     0     0     0     0
+  Microglia            0     0     0     0  3331     0     0
+  Neu-mat              0     0  4135     0     0     0     0
+  Neu-NRGN-I           0     0  3543     0     0     0     0
+  Neu-NRGN-II          0     0  8317     0     0     0     0
+  Oligodendrocytes     0     0     0     0     0 15371     0
+  OPC                  0     0     0     0     0     0 10123
+       
+          ASD Control
+  Astro  7573    4644
+  Endo   1120    1548
+  Excit 22283   22072
+  Inhib  8410    8084
+  Micro  1509    1822
+  Oligo  5768    9603
+  OPC    5340    4783
+subset to all, ncol  = 104559
+2023-06-08 16:21:53 - Top 50% filter
+Subset to top 50%: nrow:18250
+2023-06-08 16:22:34 - Get Prop Zero
+Saving 7 x 7 in image
+2023-06-08 16:23:12filter prop zero
+n genes: 434
+subset to case, ncol  = 52003
+2023-06-08 16:23:41 - Top 50% filter
+Subset to top 50%: nrow:18250
+2023-06-08 16:24:07 - Get Prop Zero
+Saving 7 x 7 in image
+2023-06-08 16:24:24filter prop zero
+n genes: 404
+subset to control, ncol  = 52556
+2023-06-08 16:24:47 - Top 50% filter
+Subset to top 50%: nrow:18250
+2023-06-08 16:25:04 - Get Prop Zero
+Saving 7 x 7 in image
+2023-06-08 16:25:24filter prop zero
+n genes: 469
+[1] "Reproducibility information:"
+[1] "2023-06-08 16:25:31 EDT"
+   user  system elapsed 
+230.240 116.299 360.944 
+Error in session_info() : could not find function "session_info"
+Execution halted
+**** Job ends ****
+Thu Jun  8 16:25:38 EDT 2023

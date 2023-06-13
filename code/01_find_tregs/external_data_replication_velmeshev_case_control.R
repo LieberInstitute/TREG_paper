@@ -162,7 +162,7 @@ velm_case_control_rank_invar <- map2(dx_sets, names(dx_sets), function(dx, name)
   
 })
 
-save(velm_case_control_rank_invar, file = here("processed_data","01_find_tregs","velm_case_control_rank_invar.Rdata"))
+save(velm_case_control_rank_invar, file = here("processed-data","01_find_tregs","velm_case_control_rank_invar.Rdata"))
 
 # sgejobs::job_single('external_data_replication_velmeshev_case_control', create_shell = TRUE, memory = '100G', command = "Rscript external_data_replication_velmeshev_case_control.R")
 
