@@ -229,6 +229,18 @@ bitr("2033", fromType = "ENTREZID", toType = "SYMBOL", OrgDb = "org.Hs.eg.db")
 #   ENTREZID SYMBOL
 # 1     2033  EP300
 
+## Switch from ENTREZID to SYMBOl
+kegg_df <- as.data.frame(kegg)
+kegg_df$geneID <- unlist(lapply(strsplit(as.data.frame(kegg)$geneID, "/"), function(x) { paste0(bitr(x, fromType = "ENTREZID", toType = "SYMBOL", OrgDb = "org.Hs.eg.db")$SYMBOL, collapse = "/") }))
+
+sort(table(kegg_df$geneID), decreasing = TRUE)
+#        AKT3/RAF1        AKT3/RAF1/EP300             AKT3/EP300             RAF1/EP300 
+#               39                     12                      2                      2 
+# AKT3/ARID1B/RAF1   AKT3/RAF1/EP300/GNAQ AKT3/RAF1/EP300/MED13L         AKT3/RAF1/GNAQ 
+#                1                      1                      1                      1 
+#      ATXN1/EP300 
+#                1 
+
 ## Below we see the full results Note that the defaults for
 ## enrichGO() and enrichKEGG() are:
 ## * pvalueCutoff = 0.05
@@ -257,72 +269,73 @@ as.data.frame(go)
 # 19      50       MF GO:0003713 transcription coactivator activity      7/46 203/9777 4.039527e-05 3.595179e-03 3.082797e-03                                    ARID1B/RERE/KMT2C/EP300/DDX17/CCAR1/NCOA6     7
 # 20      50       MF GO:0003682                  chromatin binding      8/46 383/9777 3.638758e-04 2.158996e-02 1.851298e-02                            JMJD1C/ARID1B/RERE/EP300/ASH1L/NCOA6/SUZ12/NAP1L4     8
 
-as.data.frame(kegg)
-#    Cluster       ID                                              Description GeneRatio  BgRatio       pvalue   p.adjust      qvalue                geneID Count
-# 1       20 hsa05211                                     Renal cell carcinoma      3/10  58/4501 0.0002285934 0.01409436 0.006390966       10000/5894/2033     3
-# 2       20 hsa04630                               JAK-STAT signaling pathway      3/10  65/4501 0.0003209489 0.01409436 0.006390966       10000/5894/2033     3
-# 3       20 hsa05215                                          Prostate cancer      3/10  66/4501 0.0003358373 0.01409436 0.006390966       10000/5894/2033     3
-# 4       20 hsa05164                                              Influenza A      3/10  80/4501 0.0005931352 0.01409436 0.006390966       10000/5894/2033     3
-# 5       20 hsa04935           Growth hormone synthesis, secretion and action      3/10  84/4501 0.0006846501 0.01409436 0.006390966       10000/5894/2033     3
-# 6       20 hsa05152                                             Tuberculosis      3/10  86/4501 0.0007336206 0.01409436 0.006390966       10000/5894/2033     3
-# 7       20 hsa04068                                   FoxO signaling pathway      3/10  87/4501 0.0007589272 0.01409436 0.006390966       10000/5894/2033     3
-# 8       20 hsa04919                        Thyroid hormone signaling pathway      3/10  92/4501 0.0008938768 0.01452550 0.006586461       10000/5894/2033     3
-# 9       20 hsa05161                                              Hepatitis B      3/10 102/4501 0.0012078379 0.01744655 0.007910985       10000/5894/2033     3
-# 10      20 hsa05225                                 Hepatocellular carcinoma      3/10 109/4501 0.0014646539 0.01904050 0.008633749      10000/57492/5894     3
-# 11      20 hsa05167          Kaposi sarcoma-associated herpesvirus infection      3/10 115/4501 0.0017104341 0.02021422 0.009165963       10000/5894/2033     3
-# 12      20 hsa04024                                   cAMP signaling pathway      3/10 132/4501 0.0025438388 0.02717131 0.012320596       10000/5894/2033     3
-# 13      20 hsa04370                                   VEGF signaling pathway      2/10  38/4501 0.0029931309 0.02717131 0.012320596            10000/5894     2
-# 14      20 hsa04664                          Fc epsilon RI signaling pathway      2/10  43/4501 0.0038219132 0.02717131 0.012320596            10000/5894     2
-# 15      20 hsa04330                                  Notch signaling pathway      2/10  44/4501 0.0039991595 0.02717131 0.012320596             6310/2033     2
-# 16      20 hsa04917                              Prolactin signaling pathway      2/10  44/4501 0.0039991595 0.02717131 0.012320596            10000/5894     2
-# 17      20 hsa05213                                       Endometrial cancer      2/10  44/4501 0.0039991595 0.02717131 0.012320596            10000/5894     2
-# 18      20 hsa05218                                                 Melanoma      2/10  44/4501 0.0039991595 0.02717131 0.012320596            10000/5894     2
-# 19      20 hsa05221                                   Acute myeloid leukemia      2/10  44/4501 0.0039991595 0.02717131 0.012320596            10000/5894     2
-# 20      20 hsa04929                                           GnRH secretion      2/10  45/4501 0.0041802022 0.02717131 0.012320596            10000/5894     2
-# 21      20 hsa05230                      Central carbon metabolism in cancer      2/10  48/4501 0.0047459666 0.02920304 0.013241864            10000/5894     2
-# 22      20 hsa04662                        B cell receptor signaling pathway      2/10  49/4501 0.0049420527 0.02920304 0.013241864            10000/5894     2
-# 23      20 hsa04625                 C-type lectin receptor signaling pathway      2/10  55/4501 0.0061963113 0.03084564 0.013986689            10000/5894     2
-# 24      20 hsa04720                                   Long-term potentiation      2/10  55/4501 0.0061963113 0.03084564 0.013986689             5894/2033     2
-# 25      20 hsa05223                               Non-small cell lung cancer      2/10  55/4501 0.0061963113 0.03084564 0.013986689            10000/5894     2
-# 26      20 hsa04916                                            Melanogenesis      2/10  56/4501 0.0064181805 0.03084564 0.013986689             5894/2033     2
-# 27      20 hsa05235   PD-L1 expression and PD-1 checkpoint pathway in cancer      2/10  56/4501 0.0064181805 0.03084564 0.013986689            10000/5894     2
-# 28      20 hsa05214                                                   Glioma      2/10  57/4501 0.0066436771 0.03084564 0.013986689            10000/5894     2
-# 29      20 hsa05212                                        Pancreatic cancer      2/10  59/4501 0.0071054971 0.03185223 0.014443116            10000/5894     2
-# 30      20 hsa05220                                 Chronic myeloid leukemia      2/10  61/4501 0.0075816607 0.03279280 0.014869611            10000/5894     2
-# 31      20 hsa05165                           Human papillomavirus infection      3/10 200/4501 0.0082264373 0.03279280 0.014869611       10000/5894/2033     3
-# 32      20 hsa04914                  Progesterone-mediated oocyte maturation      2/10  64/4501 0.0083225599 0.03279280 0.014869611            10000/5894     2
-# 33      20 hsa04660                        T cell receptor signaling pathway      2/10  65/4501 0.0085765793 0.03279280 0.014869611            10000/5894     2
-# 34      20 hsa05210                                        Colorectal cancer      2/10  65/4501 0.0085765793 0.03279280 0.014869611            10000/5894     2
-# 35      20 hsa01521                EGFR tyrosine kinase inhibitor resistance      2/10  67/4501 0.0090951159 0.03284347 0.014892587            10000/5894     2
-# 36      20 hsa04613                  Neutrophil extracellular trap formation      2/10  67/4501 0.0090951159 0.03284347 0.014892587            10000/5894     2
-# 37      20 hsa04922                               Glucagon signaling pathway      2/10  68/4501 0.0093596060 0.03288510 0.014911463            10000/2033     2
-# 38      20 hsa04012                                   ErbB signaling pathway      2/10  69/4501 0.0096275593 0.03293639 0.014934718            10000/5894     2
-# 39      20 hsa01522                                     Endocrine resistance      2/10  71/4501 0.0101738015 0.03391267 0.015377406            10000/5894     2
-# 40      20 hsa04066                                  HIF-1 signaling pathway      2/10  74/4501 0.0110188029 0.03410582 0.015464987            10000/2033     2
-# 41      20 hsa04550 Signaling pathways regulating pluripotency of stem cells      2/10  74/4501 0.0110188029 0.03410582 0.015464987            10000/5894     2
-# 42      20 hsa04666                         Fc gamma R-mediated phagocytosis      2/10  74/4501 0.0110188029 0.03410582 0.015464987            10000/5894     2
-# 43      20 hsa05224                                            Breast cancer      2/10  77/4501 0.0118942501 0.03514210 0.015934880            10000/5894     2
-# 44      20 hsa05226                                           Gastric cancer      2/10  77/4501 0.0118942501 0.03514210 0.015934880            10000/5894     2
-# 45      20 hsa05231                             Choline metabolism in cancer      2/10  78/4501 0.0121927696 0.03522356 0.015971815            10000/5894     2
-# 46      20 hsa04915                               Estrogen signaling pathway      2/10  79/4501 0.0124946191 0.03531088 0.016011411            10000/5894     2
-# 47      20 hsa04210                                                Apoptosis      2/10  83/4501 0.0137350538 0.03799057 0.017226495            10000/5894     2
-# 48      20 hsa04926                                Relaxin signaling pathway      2/10  84/4501 0.0140533563 0.03806117 0.017258508            10000/5894     2
-# 49      20 hsa04071                           Sphingolipid signaling pathway      2/10  87/4501 0.0150277212 0.03986946 0.018078462            10000/5894     2
-# 50      20 hsa04371                                 Apelin signaling pathway      2/10  89/4501 0.0156933831 0.04080280 0.018501673            10000/5894     2
-# 51      20 hsa05160                                              Hepatitis C      2/10  91/4501 0.0163717933 0.04173202 0.018923022            10000/5894     2
-# 52      20 hsa04722                           Neurotrophin signaling pathway      2/10  92/4501 0.0167157470 0.04178937 0.018949025            10000/5894     2
-# 53      20 hsa04910                                Insulin signaling pathway      2/10 100/4501 0.0195796687 0.04718624 0.021396189            10000/5894     2
-# 54      20 hsa04062                              Chemokine signaling pathway      2/10 101/4501 0.0199515066 0.04718624 0.021396189            10000/5894     2
-# 55      20 hsa04022                               cGMP-PKG signaling pathway      2/10 102/4501 0.0203263799 0.04718624 0.021396189            10000/5894     2
-# 56      20 hsa04218                                      Cellular senescence      2/10 102/4501 0.0203263799 0.04718624 0.021396189            10000/5894     2
-# 57      20 hsa04072                        Phospholipase D signaling pathway      2/10 106/4501 0.0218559809 0.04984697 0.022602676            10000/5894     2
-# 58      50 hsa04935           Growth hormone synthesis, secretion and action      4/20  84/4501 0.0004355245 0.04715475 0.027251455  10000/5894/2033/2776     4
-# 59      50 hsa04919                        Thyroid hormone signaling pathway      4/20  92/4501 0.0006164020 0.04715475 0.027251455 10000/5894/2033/23389     4
-# 60      50 hsa04929                                           GnRH secretion      3/20  45/4501 0.0009454515 0.04821803 0.027865939       10000/5894/2776     3
+kegg_df
+#    Cluster       ID                                              Description GeneRatio  BgRatio       pvalue   p.adjust      qvalue                 geneID Count
+# 1       20 hsa05211                                     Renal cell carcinoma      3/10  58/4501 0.0002285934 0.01409436 0.006390966        AKT3/RAF1/EP300     3
+# 2       20 hsa04630                               JAK-STAT signaling pathway      3/10  65/4501 0.0003209489 0.01409436 0.006390966        AKT3/RAF1/EP300     3
+# 3       20 hsa05215                                          Prostate cancer      3/10  66/4501 0.0003358373 0.01409436 0.006390966        AKT3/RAF1/EP300     3
+# 4       20 hsa05164                                              Influenza A      3/10  80/4501 0.0005931352 0.01409436 0.006390966        AKT3/RAF1/EP300     3
+# 5       20 hsa04935           Growth hormone synthesis, secretion and action      3/10  84/4501 0.0006846501 0.01409436 0.006390966        AKT3/RAF1/EP300     3
+# 6       20 hsa05152                                             Tuberculosis      3/10  86/4501 0.0007336206 0.01409436 0.006390966        AKT3/RAF1/EP300     3
+# 7       20 hsa04068                                   FoxO signaling pathway      3/10  87/4501 0.0007589272 0.01409436 0.006390966        AKT3/RAF1/EP300     3
+# 8       20 hsa04919                        Thyroid hormone signaling pathway      3/10  92/4501 0.0008938768 0.01452550 0.006586461        AKT3/RAF1/EP300     3
+# 9       20 hsa05161                                              Hepatitis B      3/10 102/4501 0.0012078379 0.01744655 0.007910985        AKT3/RAF1/EP300     3
+# 10      20 hsa05225                                 Hepatocellular carcinoma      3/10 109/4501 0.0014646539 0.01904050 0.008633749       AKT3/ARID1B/RAF1     3
+# 11      20 hsa05167          Kaposi sarcoma-associated herpesvirus infection      3/10 115/4501 0.0017104341 0.02021422 0.009165963        AKT3/RAF1/EP300     3
+# 12      20 hsa04024                                   cAMP signaling pathway      3/10 132/4501 0.0025438388 0.02717131 0.012320596        AKT3/RAF1/EP300     3
+# 13      20 hsa04370                                   VEGF signaling pathway      2/10  38/4501 0.0029931309 0.02717131 0.012320596              AKT3/RAF1     2
+# 14      20 hsa04664                          Fc epsilon RI signaling pathway      2/10  43/4501 0.0038219132 0.02717131 0.012320596              AKT3/RAF1     2
+# 15      20 hsa04330                                  Notch signaling pathway      2/10  44/4501 0.0039991595 0.02717131 0.012320596            ATXN1/EP300     2
+# 16      20 hsa04917                              Prolactin signaling pathway      2/10  44/4501 0.0039991595 0.02717131 0.012320596              AKT3/RAF1     2
+# 17      20 hsa05213                                       Endometrial cancer      2/10  44/4501 0.0039991595 0.02717131 0.012320596              AKT3/RAF1     2
+# 18      20 hsa05218                                                 Melanoma      2/10  44/4501 0.0039991595 0.02717131 0.012320596              AKT3/RAF1     2
+# 19      20 hsa05221                                   Acute myeloid leukemia      2/10  44/4501 0.0039991595 0.02717131 0.012320596              AKT3/RAF1     2
+# 20      20 hsa04929                                           GnRH secretion      2/10  45/4501 0.0041802022 0.02717131 0.012320596              AKT3/RAF1     2
+# 21      20 hsa05230                      Central carbon metabolism in cancer      2/10  48/4501 0.0047459666 0.02920304 0.013241864              AKT3/RAF1     2
+# 22      20 hsa04662                        B cell receptor signaling pathway      2/10  49/4501 0.0049420527 0.02920304 0.013241864              AKT3/RAF1     2
+# 23      20 hsa04625                 C-type lectin receptor signaling pathway      2/10  55/4501 0.0061963113 0.03084564 0.013986689              AKT3/RAF1     2
+# 24      20 hsa04720                                   Long-term potentiation      2/10  55/4501 0.0061963113 0.03084564 0.013986689             RAF1/EP300     2
+# 25      20 hsa05223                               Non-small cell lung cancer      2/10  55/4501 0.0061963113 0.03084564 0.013986689              AKT3/RAF1     2
+# 26      20 hsa04916                                            Melanogenesis      2/10  56/4501 0.0064181805 0.03084564 0.013986689             RAF1/EP300     2
+# 27      20 hsa05235   PD-L1 expression and PD-1 checkpoint pathway in cancer      2/10  56/4501 0.0064181805 0.03084564 0.013986689              AKT3/RAF1     2
+# 28      20 hsa05214                                                   Glioma      2/10  57/4501 0.0066436771 0.03084564 0.013986689              AKT3/RAF1     2
+# 29      20 hsa05212                                        Pancreatic cancer      2/10  59/4501 0.0071054971 0.03185223 0.014443116              AKT3/RAF1     2
+# 30      20 hsa05220                                 Chronic myeloid leukemia      2/10  61/4501 0.0075816607 0.03279280 0.014869611              AKT3/RAF1     2
+# 31      20 hsa05165                           Human papillomavirus infection      3/10 200/4501 0.0082264373 0.03279280 0.014869611        AKT3/RAF1/EP300     3
+# 32      20 hsa04914                  Progesterone-mediated oocyte maturation      2/10  64/4501 0.0083225599 0.03279280 0.014869611              AKT3/RAF1     2
+# 33      20 hsa04660                        T cell receptor signaling pathway      2/10  65/4501 0.0085765793 0.03279280 0.014869611              AKT3/RAF1     2
+# 34      20 hsa05210                                        Colorectal cancer      2/10  65/4501 0.0085765793 0.03279280 0.014869611              AKT3/RAF1     2
+# 35      20 hsa01521                EGFR tyrosine kinase inhibitor resistance      2/10  67/4501 0.0090951159 0.03284347 0.014892587              AKT3/RAF1     2
+# 36      20 hsa04613                  Neutrophil extracellular trap formation      2/10  67/4501 0.0090951159 0.03284347 0.014892587              AKT3/RAF1     2
+# 37      20 hsa04922                               Glucagon signaling pathway      2/10  68/4501 0.0093596060 0.03288510 0.014911463             AKT3/EP300     2
+# 38      20 hsa04012                                   ErbB signaling pathway      2/10  69/4501 0.0096275593 0.03293639 0.014934718              AKT3/RAF1     2
+# 39      20 hsa01522                                     Endocrine resistance      2/10  71/4501 0.0101738015 0.03391267 0.015377406              AKT3/RAF1     2
+# 40      20 hsa04066                                  HIF-1 signaling pathway      2/10  74/4501 0.0110188029 0.03410582 0.015464987             AKT3/EP300     2
+# 41      20 hsa04550 Signaling pathways regulating pluripotency of stem cells      2/10  74/4501 0.0110188029 0.03410582 0.015464987              AKT3/RAF1     2
+# 42      20 hsa04666                         Fc gamma R-mediated phagocytosis      2/10  74/4501 0.0110188029 0.03410582 0.015464987              AKT3/RAF1     2
+# 43      20 hsa05224                                            Breast cancer      2/10  77/4501 0.0118942501 0.03514210 0.015934880              AKT3/RAF1     2
+# 44      20 hsa05226                                           Gastric cancer      2/10  77/4501 0.0118942501 0.03514210 0.015934880              AKT3/RAF1     2
+# 45      20 hsa05231                             Choline metabolism in cancer      2/10  78/4501 0.0121927696 0.03522356 0.015971815              AKT3/RAF1     2
+# 46      20 hsa04915                               Estrogen signaling pathway      2/10  79/4501 0.0124946191 0.03531088 0.016011411              AKT3/RAF1     2
+# 47      20 hsa04210                                                Apoptosis      2/10  83/4501 0.0137350538 0.03799057 0.017226495              AKT3/RAF1     2
+# 48      20 hsa04926                                Relaxin signaling pathway      2/10  84/4501 0.0140533563 0.03806117 0.017258508              AKT3/RAF1     2
+# 49      20 hsa04071                           Sphingolipid signaling pathway      2/10  87/4501 0.0150277212 0.03986946 0.018078462              AKT3/RAF1     2
+# 50      20 hsa04371                                 Apelin signaling pathway      2/10  89/4501 0.0156933831 0.04080280 0.018501673              AKT3/RAF1     2
+# 51      20 hsa05160                                              Hepatitis C      2/10  91/4501 0.0163717933 0.04173202 0.018923022              AKT3/RAF1     2
+# 52      20 hsa04722                           Neurotrophin signaling pathway      2/10  92/4501 0.0167157470 0.04178937 0.018949025              AKT3/RAF1     2
+# 53      20 hsa04910                                Insulin signaling pathway      2/10 100/4501 0.0195796687 0.04718624 0.021396189              AKT3/RAF1     2
+# 54      20 hsa04062                              Chemokine signaling pathway      2/10 101/4501 0.0199515066 0.04718624 0.021396189              AKT3/RAF1     2
+# 55      20 hsa04022                               cGMP-PKG signaling pathway      2/10 102/4501 0.0203263799 0.04718624 0.021396189              AKT3/RAF1     2
+# 56      20 hsa04218                                      Cellular senescence      2/10 102/4501 0.0203263799 0.04718624 0.021396189              AKT3/RAF1     2
+# 57      20 hsa04072                        Phospholipase D signaling pathway      2/10 106/4501 0.0218559809 0.04984697 0.022602676              AKT3/RAF1     2
+# 58      50 hsa04935           Growth hormone synthesis, secretion and action      4/20  84/4501 0.0004355245 0.04715475 0.027251455   AKT3/RAF1/EP300/GNAQ     4
+# 59      50 hsa04919                        Thyroid hormone signaling pathway      4/20  92/4501 0.0006164020 0.04715475 0.027251455 AKT3/RAF1/EP300/MED13L     4
+# 60      50 hsa04929                                           GnRH secretion      3/20  45/4501 0.0009454515 0.04821803 0.027865939         AKT3/RAF1/GNAQ     3
+
 
 
 write_xlsx(as.data.frame(go), path = file.path(dir_rdata, "TableSxx_GO.xlsx"))
-write_xlsx(as.data.frame(kegg), path = file.path(dir_rdata, "TableSxx_KEGG.xlsx"))
+write_xlsx(kegg_df, path = file.path(dir_rdata, "TableSxx_KEGG.xlsx"))
 
 ## Reproducibility information
 print("Reproducibility information:")
