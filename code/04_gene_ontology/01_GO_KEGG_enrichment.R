@@ -229,7 +229,7 @@ bitr("2033", fromType = "ENTREZID", toType = "SYMBOL", OrgDb = "org.Hs.eg.db")
 #   ENTREZID SYMBOL
 # 1     2033  EP300
 
-## Switch from ENTREZID to SYMBOl
+## Switch from ENTREZID to SYMBOL
 kegg_df <- as.data.frame(kegg)
 kegg_df$geneID <- unlist(lapply(strsplit(as.data.frame(kegg)$geneID, "/"), function(x) { paste0(bitr(x, fromType = "ENTREZID", toType = "SYMBOL", OrgDb = "org.Hs.eg.db")$SYMBOL, collapse = "/") }))
 
