@@ -1,6 +1,5 @@
 library("here")
 library("sessioninfo")
-library("spatialLIBD")
 library("clusterProfiler")
 library("org.Hs.eg.db")
 library("ggplot2")
@@ -8,13 +7,13 @@ library("ggplot2")
 ## Plot output directory
 dir_plots <- here::here(
     "plots",
-    "17_grey_matter_only_Abeta_microenv",
+    "04_gene_ontology",
     "wholegenome"
 )
 dir.create(dir_plots, showWarnings = FALSE, recursive = TRUE)
 
 ## Load ranked candidate TREGs
-load(here("processed-data", "01_find_tregs", "supp_tables", "rank_invar.Rdata"), verbose = TRUE)
+load(here("processed-data", "01_find_tregs", "rank_invar.Rdata"), verbose = TRUE)
 
 
 ## For sig_genes_extract_all() to work
