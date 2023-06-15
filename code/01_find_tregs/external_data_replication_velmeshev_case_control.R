@@ -158,7 +158,7 @@ velm_case_control_rank_invar <- map2(dx_sets, names(dx_sets), function(dx, name)
   
   # gene_metrics_velm_broad |> filter(SYMBOL %in% c("MALAT1", "AKT3", "ARID1B"))
   
-  return(rank_invar_velm)
+  return(gene_metrics_velm_broad)
   
 })
 
@@ -172,4 +172,4 @@ print("Reproducibility information:")
 Sys.time()
 proc.time()
 options(width = 120)
-session_info()
+sessioninfo::session_info()
