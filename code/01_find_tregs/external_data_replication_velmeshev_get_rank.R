@@ -34,8 +34,8 @@ table(sce.asd$cellType.Broad, sce.asd$diagnosis)
 # 12217  2668 44355 16494  3331 15371 10123
 
 
-
-sce.asd <- sce.asd[, sce.asd$diagnosis %in% dx_sets[[i]]]
+## rank
+sce.asd <- sce.asd[, sce.asd$diagnosis %in% dx_sets[[dx_i]]]
 dx_input
 message("subset to ", dx_input, ", ncol  = ", ncol(sce.asd))
 
