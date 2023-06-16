@@ -1,9 +1,9 @@
 #!/bin/bash
 #$ -cwd
-#$ -l caracol, mem_free=100G,h_vmem=100G,h_fsize=100G
+#$ -l caracol,mem_free=150G,h_vmem=150G,h_fsize=100G
 #$ -N external_data_replication_velmeshev_get_rank
-#$ -o logs/external_data_replication_velmeshev_get_rank.txt
-#$ -e logs/external_data_replication_velmeshev_get_rank.txt
+#$ -o logs/external_data_replication_velmeshev_get_rank.$TASK_ID.txt
+#$ -e logs/external_data_replication_velmeshev_get_rank.$TASK_ID.txt
 #$ -m e
 #$ -t 1-3
 #$ -tc 3

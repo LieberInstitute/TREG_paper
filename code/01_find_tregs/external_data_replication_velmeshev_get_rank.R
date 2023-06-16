@@ -36,12 +36,11 @@ table(sce.asd$cellType.Broad, sce.asd$diagnosis)
 
 ## rank
 sce.asd <- sce.asd[, sce.asd$diagnosis %in% dx_sets[[dx_i]]]
-dx_input
-message("subset to ", dx_input, ", ncol  = ", ncol(sce.asd))
+message("subset to ", dx_name, ", ncol  = ", ncol(sce.asd))
 
 message(Sys.time(), " - Ranking genes")
 
-rank_df <- apply(as.matrix(assays(sce_pan)$logcounts), 2, rank) %>%
+rank_df <- apply(as.matrix(assays(sce.asd)$logcounts), 2, rank) %>%
   as.data.frame()
 
 message(Sys.time(), " - save data")
