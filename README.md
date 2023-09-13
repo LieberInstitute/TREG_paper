@@ -12,7 +12,7 @@ In this repository we applied functions from `TREG` to find candidate TREGs in p
 
 If you use anything in this repository please cite the following publication:
 
-Huuki-Myers LA, Montgomery KD, Kwon SH, Page SC, Hicks SC, Maynard KR, Collado-Torres L (2022). “Data Driven Identification of Total RNA Expression Genes "TREGs" for estimation of RNA abundance in heterogeneous cell types.” _bioRxiv_. doi: [10.1101/TODO](https://doi.org/10.1101/TODO).
+Huuki-Myers LA, Montgomery KD, Kwon SH, Page SC, Hicks SC, Maynard KR, Collado-Torres L (2022). “Data Driven Identification of Total RNA Expression Genes "TREGs" for estimation of RNA abundance in heterogeneous cell types.” _bioRxiv_. doi: [10.1101/2022.04.28.489923](https://doi.org/10.1101/2022.04.28.489923).
 
 A BibTeX entry for LaTeX users is
 
