@@ -22,8 +22,8 @@ A BibTeX entry for LaTeX users is
     author = {Louise A. Huuki-Myers and Kelsey D. Montgomery and Sang Ho. Kwon and Stephanie C. Page and Stephanie C. Hicks and Kristen R. Maynard and Leonardo Collado-Torres},
     year = {2022},
     journal = {bioRxiv},
-    doi = {10.1101/TODO},
-    url = {https://doi.org/10.1101/TODO},
+    doi = {10.1101/2022.04.28.489923},
+    url = {https://doi.org/10.1101/2022.04.28.489923},
   }
 ```
 
